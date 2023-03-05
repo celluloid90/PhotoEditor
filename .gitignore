@@ -5,7 +5,7 @@
 *.aab
 
 # Files for the ART/Dalvik VM
-*.dex
+*.dexq
 
 # Java class files
 *.class
@@ -44,6 +44,7 @@ captures/
 .idea/assetWizardSettings.xml
 .idea/dictionaries
 .idea/libraries
+.idea/misc.xml
 # Android Studio 3 in .gitignore file.
 .idea/caches
 .idea/modules.xml
