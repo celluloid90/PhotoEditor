@@ -5,12 +5,29 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+def getGitHubUrl = { ->
+    return "https://maven.pkg.github.com/BrainCraftAndroid/Utils"
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    Properties properties = new Properties()
+    properties.load(file('local.properties').newDataInputStream())
     repositories {
         google()
         mavenCentral()
+        maven {
+            name = "GitHubPackages"
+
+            url = uri(getGitHubUrl())
+            credentials {
+                username = properties.getProperty("USERNAME")
+                password = properties.getProperty("PASSWORD")
+            }
+        }
     }
 }
 rootProject.name = "PHTDTR"
 include ':app'
+include ':CollageEditor'

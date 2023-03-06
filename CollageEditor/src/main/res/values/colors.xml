@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text_color_purple">#9C61DD</color>
+    <color name="color_adjust_devider">#E6E6E6</color>
+    <color name="color_black">#000000</color>
+    <color name="color_gray_dark">#373636</color>
+    <color name="color_white">#FFFFFF</color>
+</resources>

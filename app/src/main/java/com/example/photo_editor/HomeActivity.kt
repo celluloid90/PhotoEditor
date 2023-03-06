@@ -2,8 +2,8 @@ package com.example.photo_editor
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.bcl.android.collage_editor.activity.CollageHome
 import com.example.photo_editor.databinding.ActivityHomeBinding
 import com.example.photo_editor.editor.activity.EditorActivity
 
@@ -16,10 +16,10 @@ class HomeActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.editor.setOnClickListener {
-           startActivity(Intent(this, EditorActivity::class.java))
+            startActivity(Intent(this, EditorActivity::class.java))
         }
         binding.collage.setOnClickListener {
-            Toast.makeText(this, "Collage", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, CollageHome::class.java))
         }
     }
 }
