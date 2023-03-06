@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".editor.activity.EditorActivity">
+    tools:context=".editor.activity.PickerActivity">
 
  <!-- <com.example.photo_editor.editor.view.CustomView
       android:id="@+id/customView"
@@ -27,7 +27,7 @@
       app:layout_constraintStart_toStartOf="parent" />-->
 
   <Button
-      android:id="@+id/BSelectImage"
+      android:id="@+id/buttonLoadPicture"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_centerHorizontal="true"
@@ -39,16 +39,4 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintTop_toTopOf="parent"/>
-
-
-  <ImageView
-      android:id="@+id/IVPreviewImage"
-      android:layout_width="match_parent"
-      android:layout_height="300dp"
-      android:layout_marginStart="16dp"
-      android:layout_marginTop="16dp"
-      android:layout_marginEnd="16dp"
-      app:layout_constraintTop_toBottomOf="@+id/BSelectImage"/>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

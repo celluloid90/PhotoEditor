@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="rationame">
+        <item>Orginal</item>
+        <item>1:1</item>
+        <item>4:5</item>
+        <item>9:16</item>
+        <item>3:4</item>
+        <item>4:3</item>
+    </string-array>
+
+    <integer-array name="ratio_icons">
+        <item>@drawable/original</item>
+        <item>@drawable/square</item>
+        <item>@drawable/four_five</item>
+        <item>@drawable/nine_sixteen</item>
+        <item>@drawable/three_four</item>
+        <item>@drawable/four_three</item>
+    </integer-array>
+</resources>

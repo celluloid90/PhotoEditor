@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.photo_editor.databinding.ActivityHomeBinding
-import com.example.photo_editor.editor.activity.EditorActivity
+import com.example.photo_editor.editor.activity.PickerActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -16,7 +16,7 @@ class HomeActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.editor.setOnClickListener {
-           startActivity(Intent(this, EditorActivity::class.java))
+           startActivity(Intent(this, PickerActivity::class.java))
         }
         binding.collage.setOnClickListener {
             Toast.makeText(this, "Collage", Toast.LENGTH_SHORT).show()

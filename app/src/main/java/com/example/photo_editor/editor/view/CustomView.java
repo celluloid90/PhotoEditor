@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -34,34 +35,35 @@ public class CustomView extends View {
     Bitmap mBitmap;
 
 
-    public CustomView(Context context) {
+    public CustomView(Context context, Bitmap bitmap) {
         super(context);
-        init(null);
+        init(null, bitmap);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs) {
+    public CustomView(Context context, @Nullable AttributeSet attrs, Bitmap bitmap) {
         super(context, attrs);
-        init(attrs);
+        init(attrs, bitmap);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, Bitmap bitmap) {
         super(context, attrs, defStyleAttr);
-        init(attrs);
+        init(attrs, bitmap);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes, Bitmap bitmap) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(attrs);
+        init(attrs, bitmap);
     }
 
-    public void init(@Nullable AttributeSet set) {
+    public void init(@Nullable AttributeSet set, Bitmap bitmap) {
+        this.mBitmap = bitmap;
         mRectSquare = new Rect();
         mPaintSquare = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintCircle = new Paint();
         mPaintCircle.setAntiAlias(true);
         mPaintCircle.setColor(Color.parseColor("#00ccff"));
 
-        mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.friends_main);
+        // mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.friends_main);
 
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -69,7 +71,8 @@ public class CustomView extends View {
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 int padding = 50;
                 mBitmap = getResizedBitmap(mBitmap, getWidth() - padding, getHeight() - padding);
-                new Timer().scheduleAtFixedRate(new TimerTask() {
+
+             /*   new Timer().scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
                         int newWidth = mBitmap.getWidth() - 50;
@@ -83,7 +86,7 @@ public class CustomView extends View {
                         mBitmap = getResizedBitmap(mBitmap, newWidth,newHeight);
                         postInvalidate();
                     }
-                }, 2000, 500);
+                }, 2000, 500);*/
             }
         });
 
@@ -116,7 +119,7 @@ public class CustomView extends View {
         mRectSquare.bottom = mRectSquare.top + mSquareSize;
 
 
-        canvas.drawRect(mRectSquare, mPaintSquare);
+        //canvas.drawRect(mRectSquare, mPaintSquare);
 
       /*  float cy, cx;
         float radius = 100f;
@@ -128,7 +131,7 @@ public class CustomView extends View {
             mCircleY = getHeight() / 2;
 
         }
-        canvas.drawCircle(mCircleX, mCircleY, mCircleRadius, mPaintCircle);
+        //canvas.drawCircle(mCircleX, mCircleY, mCircleRadius, mPaintCircle);
         float imageX = (getWidth() - mBitmap.getWidth()) / 2;
         float imageY = (getHeight() - mBitmap.getHeight()) / 2;
 
