@@ -3,7 +3,7 @@ package com.example.photo_editor
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.bcl.android.collage_editor.activity.CollageHome
+import com.bcl.android.collage_editor.activity.CollagePicker
 import com.example.photo_editor.databinding.ActivityHomeBinding
 import com.example.photo_editor.editor.activity.EditorActivity
 
@@ -19,7 +19,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, EditorActivity::class.java))
         }
         binding.collage.setOnClickListener {
-            startActivity(Intent(this, CollageHome::class.java))
+            startActivity(Intent(this, CollagePicker::class.java))
         }
     }
 }
