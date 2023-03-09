@@ -3,6 +3,7 @@
     <color name="text_color_purple">#9C61DD</color>
     <color name="color_adjust_devider">#E6E6E6</color>
     <color name="color_black">#000000</color>
-    <color name="color_gray_dark">#373636</color>
+    <color name="color_gray_dark">#787272</color>
     <color name="color_white">#FFFFFF</color>
+    <color name="bottom_segment_color">#15181B</color>
 </resources>
