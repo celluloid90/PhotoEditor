@@ -10,18 +10,24 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import androidx.annotation.LongDef;
 import androidx.annotation.Nullable;
 
 import com.example.photo_editor.R;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
 
 public class CustomView extends View {
     private static final int SQUARE_SIZE_DFF = 400;
@@ -30,63 +36,56 @@ public class CustomView extends View {
     private int mSquareColor;
     private int mSquareSize;
     Paint mPaintCircle;
-    float mCircleX, mCircleY;
-    float mCircleRadius = 100f;
     Bitmap mBitmap;
+    Bitmap mBackGroundBitmap;
+    float dX, dY;
+    float x, y;
+    float imageBackGroundY;
+    float imageBackGroundX;
+    int bm_offsetx;
+    int bm_offsety;
+    int bm_x = 0;
+    int bm_y = 0;
+    float imageX;
+    float imageY;
+    boolean dm_touched = false;
+    boolean touching = false;
 
-
-    public CustomView(Context context, Bitmap bitmap) {
+    public CustomView(Context context) {
         super(context);
-        init(null, bitmap);
+        init(null);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs, Bitmap bitmap) {
+    public CustomView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(attrs, bitmap);
+        init(attrs);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, Bitmap bitmap) {
+    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(attrs, bitmap);
+        init(attrs);
     }
 
-    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes, Bitmap bitmap) {
+    public CustomView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(attrs, bitmap);
+        init(attrs);
     }
 
-    public void init(@Nullable AttributeSet set, Bitmap bitmap) {
-        this.mBitmap = bitmap;
+    public void init(@Nullable AttributeSet set) {
+
         mRectSquare = new Rect();
         mPaintSquare = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaintCircle = new Paint();
         mPaintCircle.setAntiAlias(true);
         mPaintCircle.setColor(Color.parseColor("#00ccff"));
-
-        // mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.friends_main);
-
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                int padding = 50;
+                int padding = 150;
                 mBitmap = getResizedBitmap(mBitmap, getWidth() - padding, getHeight() - padding);
+                mBackGroundBitmap = getResizedBitmap(mBackGroundBitmap, getWidth(), getHeight());
 
-             /*   new Timer().scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        int newWidth = mBitmap.getWidth() - 50;
-                        int newHeight = mBitmap.getHeight() - 50;
-
-                        if (newWidth <= 0 ||newHeight<=0){
-                            cancel();
-                            return;
-                        }
-
-                        mBitmap = getResizedBitmap(mBitmap, newWidth,newHeight);
-                        postInvalidate();
-                    }
-                }, 2000, 500);*/
             }
         });
 
@@ -102,78 +101,39 @@ public class CustomView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+    }
+
+    public void setPicture(Bitmap bitmap) {
+        this.mBitmap = bitmap;
+        invalidate();
 
     }
 
-    public void swapColor() {
-        mPaintSquare.setColor(mPaintSquare.getColor() == mSquareColor ? Color.RED : mSquareColor);
-        postInvalidate();
-
+    public void setBackgroundPicture(Bitmap bitmap) {
+        this.mBackGroundBitmap = bitmap;
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        mRectSquare.left = 50;
-        mRectSquare.top = 50;
-        mRectSquare.right = mRectSquare.left + mSquareSize;
-        mRectSquare.bottom = mRectSquare.top + mSquareSize;
+   /*     imageX = (getWidth() - mBitmap.getWidth()) / 2;
+        imageY = (getHeight() - mBitmap.getHeight()) / 2;*/
 
+        imageBackGroundX = (getWidth() - mBackGroundBitmap.getWidth()) / 2;
+        imageBackGroundY = (getHeight() - mBackGroundBitmap.getHeight()) / 2;
 
-        //canvas.drawRect(mRectSquare, mPaintSquare);
-
-      /*  float cy, cx;
-        float radius = 100f;
-        cx =getWidth() - radius - 50f;
-        cy = mRectSquare.top + (mRectSquare.height()/2);*/
-
-        if (mCircleX == 0f || mCircleY == 0f) {
-            mCircleX = getWidth() / 2;
-            mCircleY = getHeight() / 2;
-
-        }
-        //canvas.drawCircle(mCircleX, mCircleY, mCircleRadius, mPaintCircle);
-        float imageX = (getWidth() - mBitmap.getWidth()) / 2;
-        float imageY = (getHeight() - mBitmap.getHeight()) / 2;
-
+        canvas.drawBitmap(mBackGroundBitmap, imageBackGroundX, imageBackGroundY, null);
         canvas.drawBitmap(mBitmap, imageX, imageY, null);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        boolean value = super.onTouchEvent(event);
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN: {
-
-                float x = event.getX();
-                float y = event.getY();
-
-                if (mRectSquare.left < x && mRectSquare.right > x)
-                    if (mRectSquare.top < y && mRectSquare.bottom > y) {
-                        mCircleRadius += 10f;
-                        postInvalidate();
-                    }
-                return true;
-            }
-            case MotionEvent.ACTION_MOVE: {
-
-                float x = event.getX();
-                float y = event.getY();
-
-                double dx = Math.pow(x - mCircleX, 2);
-                double dy = Math.pow(y - mCircleY, 2);
-
-                if (dx + dy < Math.pow(mCircleRadius, 2)) {
-                    mCircleX = x;
-                    mCircleY = y;
-                    postInvalidate();
-                    return true;
-                }
-                return true;
-            }
-
-        }
-        return value;
-
     }
 
     private Bitmap getResizedBitmap(Bitmap bitmap, int width, int height) {
@@ -182,5 +142,41 @@ public class CustomView extends View {
         RectF dest = new RectF(0, 0, width, height);
         matrix.setRectToRect(src, dest, Matrix.ScaleToFit.CENTER);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean value = super.onTouchEvent(event);
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                x = event.getX();
+                y = event.getY();
+                return true;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                float moveX, moveY;
+                moveX = event.getX();
+                moveY = event.getY();
+                float distanceX = moveX - x;
+                float distanceY = moveY - y;
+                imageX = distanceX;
+                imageY = distanceY;
+                postInvalidate();
+                return true;
+
+            }
+            case MotionEvent.ACTION_UP: {
+                touching = false;
+                dm_touched = false;
+                return true;
+            }
+        }
+        invalidate();
+        return value;
+
+    }
+
+    public interface ViewSizeChangedListener {
+        void customViewSizeChange();
     }
 }

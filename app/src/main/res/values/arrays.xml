@@ -7,6 +7,10 @@
         <item>9:16</item>
         <item>3:4</item>
         <item>4:3</item>
+        <item>2:3</item>
+        <item>3:2</item>
+        <item>5:4</item>
+        <item>16:9</item>
     </string-array>
 
     <integer-array name="ratio_icons">
@@ -16,5 +20,9 @@
         <item>@drawable/nine_sixteen</item>
         <item>@drawable/three_four</item>
         <item>@drawable/four_three</item>
+        <item>@drawable/two_three</item>
+        <item>@drawable/three_two</item>
+        <item>@drawable/five_four</item>
+        <item>@drawable/sixteen_nine</item>
     </integer-array>
 </resources>
