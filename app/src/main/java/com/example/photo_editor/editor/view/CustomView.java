@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.renderscript.Allocation;
@@ -17,10 +18,12 @@ import android.renderscript.ScriptIntrinsicBlur;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
 import androidx.annotation.LongDef;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.photo_editor.R;
@@ -28,8 +31,16 @@ import com.example.photo_editor.R;
 import java.util.Timer;
 import java.util.TimerTask;
 
+// android zoomin and zoom out a bitmap in customview cancas
 
 public class CustomView extends View {
+
+    private float mPositionX, mPositionY;
+    private ScaleGestureDetector mScaleDetector;
+    private float mScaleFactor = 1.0f;
+    private final static float mMinZoom = 1.0f;
+    private final static float mMaxZoom = 5.0f;
+
     private static final int SQUARE_SIZE_DFF = 400;
     Rect mRectSquare;
     Paint mPaintSquare;
@@ -38,18 +49,24 @@ public class CustomView extends View {
     Paint mPaintCircle;
     Bitmap mBitmap;
     Bitmap mBackGroundBitmap;
-    float dX, dY;
     float x, y;
     float imageBackGroundY;
     float imageBackGroundX;
-    int bm_offsetx;
-    int bm_offsety;
-    int bm_x = 0;
-    int bm_y = 0;
     float imageX;
     float imageY;
-    boolean dm_touched = false;
-    boolean touching = false;
+
+    PointF start = new PointF();
+    PointF mid = new PointF();
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(@NonNull ScaleGestureDetector detector) {
+            mScaleFactor *= detector.getScaleFactor();
+            mScaleFactor = Math.max(mScaleFactor, Math.min(mScaleFactor, mMinZoom));
+            invalidate();
+            return true;
+        }
+    }
 
     public CustomView(Context context) {
         super(context);
@@ -78,6 +95,7 @@ public class CustomView extends View {
         mPaintCircle = new Paint();
         mPaintCircle.setAntiAlias(true);
         mPaintCircle.setColor(Color.parseColor("#00ccff"));
+        mScaleDetector = new ScaleGestureDetector(getContext(),new ScaleListener());
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -133,7 +151,18 @@ public class CustomView extends View {
         imageBackGroundY = (getHeight() - mBackGroundBitmap.getHeight()) / 2;
 
         canvas.drawBitmap(mBackGroundBitmap, imageBackGroundX, imageBackGroundY, null);
+
+        drawBitmap(canvas);
+
+    }
+
+    private void drawBitmap(Canvas canvas) {
+        canvas.save();
+        canvas.translate(mPositionX, mPositionY);
+        canvas.scale(mScaleFactor, mScaleFactor);
         canvas.drawBitmap(mBitmap, imageX, imageY, null);
+        canvas.restore();
+
     }
 
     private Bitmap getResizedBitmap(Bitmap bitmap, int width, int height) {
@@ -146,7 +175,8 @@ public class CustomView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean value = super.onTouchEvent(event);
+        //boolean value = super.onTouchEvent(event);
+        mScaleDetector.onTouchEvent(event);
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 x = event.getX();
@@ -157,24 +187,33 @@ public class CustomView extends View {
                 float moveX, moveY;
                 moveX = event.getX();
                 moveY = event.getY();
-                float distanceX = moveX - x;
-                float distanceY = moveY - y;
-                imageX = distanceX;
-                imageY = distanceY;
+                mPositionX += moveX - x;
+                mPositionY += moveY - y;
+                y = moveY;
+                x = moveX;
                 postInvalidate();
                 return true;
 
             }
             case MotionEvent.ACTION_UP: {
-                touching = false;
-                dm_touched = false;
                 return true;
+            }
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                midPoint(mid, event);
+                Log.d("TAG", "onTouchEvent: " + mid);
             }
         }
         invalidate();
-        return value;
+        return true;
 
     }
+
+    private void midPoint(PointF point, MotionEvent event) {
+        float x = event.getX(0) + event.getX(1);
+        float y = event.getY(0) + event.getY(1);
+        point.set(x / 2, y / 2);
+    }
+
 
     public interface ViewSizeChangedListener {
         void customViewSizeChange();
