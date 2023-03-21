@@ -21,7 +21,7 @@ public class Utils {
     }
 
     public static void viewSlideDown(View view) {
-        view.setVisibility(View.GONE);
+        view.setVisibility(View.INVISIBLE);
         TranslateAnimation animate = new TranslateAnimation(0,                 // fromXDelta
                 0,                 // toXDelta
                 0,                 // fromYDelta

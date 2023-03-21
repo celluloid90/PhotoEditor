@@ -1,6 +1,5 @@
 package com.bcl.android.collage_editor.datasource;
 
-import android.content.Context;
 import android.os.Build;
 
 import com.braincraft.droid.filepicker.config.Configurations;
@@ -27,10 +26,11 @@ public class FilePickerManager {
             .setShowFiles(false)
             .setIgnoreNoMedia(true)
             .setShowImages(true)
-            .setMaxSelection(20)
+            .setMaxSelection(10)
             .setOptionMenuEnabled(false)
             .setPortraitSpanCount(4)
             .setGalleryViewType(Configurations.DESC)
+            .setMaxSelectionOverflowText("Max selection reached")
             .setLayoutManagerType(Constant.GRID_LAYOUT_MANAGER)
             .setSingleClickSelection(true);
 

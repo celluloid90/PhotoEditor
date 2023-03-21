@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CollageEditor</string>
+    <string name="warning_out_of_memory">Not enough memory. Please remove images or your program will be crashed.!!!</string>
 </resources>

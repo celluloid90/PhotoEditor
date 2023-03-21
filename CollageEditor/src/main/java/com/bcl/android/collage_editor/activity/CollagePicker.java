@@ -137,7 +137,8 @@ public class CollagePicker extends AppCompatActivity implements FilePickerFragme
     @Override
     public void onFilePickerItemClicked(List<MediaFile> mediaFiles) {
         if (mediaFiles != null && !mediaFiles.isEmpty()) {
-            Intent intent = new Intent(this, CollageHome.class);
+
+            Intent intent = new Intent(this, EditHome.class);
             intent.putExtra(Constant.MEDIA_FILES, new ArrayList<>(mediaFiles));
             startActivity(intent);
         }
