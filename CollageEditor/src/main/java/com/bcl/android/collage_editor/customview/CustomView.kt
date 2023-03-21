@@ -2,7 +2,9 @@ package com.bcl.android.collage_editor.customview
 
 import android.content.Context
 import android.graphics.*
+import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.util.AttributeSet
 import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.OnScaleGestureListener
@@ -29,16 +31,18 @@ class CustomView @JvmOverloads constructor(
     var oldWidth: Int = 0
     var oldHeight: Int = 0
     var corEffect = CornerPathEffect(0f)
+    private var uriLists: ArrayList<Uri> = ArrayList()
+    private var bitmapLists: ArrayList<Bitmap> = ArrayList()
 
     init {
         path1 = Path()
         path2 = Path()
 
-        paint1 = Paint(Paint.ANTI_ALIAS_FLAG)
-        paint1.setColor(Color.CYAN)
+        paint1 = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        paint1.style = Paint.Style.FILL
 
-        paint2 = Paint(Paint.ANTI_ALIAS_FLAG)
-        paint2.setColor(Color.MAGENTA)
+        paint2 = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        paint2.style = Paint.Style.FILL
 
         corEffect = CornerPathEffect(0.0f)
         paint1.pathEffect = corEffect
@@ -100,7 +104,6 @@ class CustomView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-
         oldWidth = w
         oldHeight = h
 
@@ -118,22 +121,29 @@ class CustomView @JvmOverloads constructor(
         path2.lineTo((1f - gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
         path2.lineTo((0.70f + gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
         path2.close()
-
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-
         canvas?.save()
         canvas?.scale(scaleFactor, scaleFactor, width / 2f, height / 2f)
 
         paint1.pathEffect = corEffect
         paint2.pathEffect = corEffect
 
-        canvas?.drawPath(path1, paint1)
+       // canvas?.drawPath(path1, paint1)
+      //  canvas?.drawPath(path2, paint2)
 
-        canvas?.drawPath(path2, paint2)
+        canvas?.save()
+        canvas?.clipPath(path1)
+        canvas?.drawBitmap(bitmapLists[0], Matrix(), paint1)
+
+        canvas?.restore()
+        canvas?.save()
+
+        canvas?.clipPath(path2)
+        canvas?.drawBitmap(bitmapLists[1], Matrix(), paint2)
 
         canvas?.restore()
     }
@@ -141,6 +151,17 @@ class CustomView @JvmOverloads constructor(
 
     fun updateEdgeSmooth(edgeGapValue: Float) {
         corEffect = CornerPathEffect(edgeGapValue)
+        invalidate()
+    }
+
+    fun setData(uriLists: ArrayList<Uri>) {
+        bitmapLists.clear()
+        this.uriLists.clear()
+        this.uriLists.addAll(uriLists)
+
+        for (uri in this.uriLists) {
+            bitmapLists.add(MediaStore.Images.Media.getBitmap(context.contentResolver, uri))
+        }
         invalidate()
     }
 }

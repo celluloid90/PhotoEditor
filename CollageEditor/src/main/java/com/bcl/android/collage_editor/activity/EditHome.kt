@@ -1,5 +1,6 @@
 package com.bcl.android.collage_editor.activity
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -28,8 +29,9 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
     lateinit var edgeSmoothBar: SeekBar
     var zoomScaleValue: Float = 1f
     var edgeGapValue: Float = 0.01f
-    lateinit var customView: CustomView
+    private lateinit var customView: CustomView
     private lateinit var mediaFiles: ArrayList<MediaFile>
+    private var uriLists: ArrayList<Uri> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,8 +41,14 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         mediaFiles =
             intent.getParcelableArrayListExtra<MediaFile>(Constant.MEDIA_FILES) as ArrayList<MediaFile>
 
+        for (mediaFile in mediaFiles) {
+            uriLists.add(mediaFile.uri)
+        }
+
+
         initAllViews()
         initAllListeners()
+        customView.setData(uriLists)
     }
 
     private fun initAllListeners() {
