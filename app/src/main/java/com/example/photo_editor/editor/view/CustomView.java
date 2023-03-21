@@ -33,6 +33,8 @@ import java.util.TimerTask;
 
 // android zoomin and zoom out a bitmap in customview cancas
 
+//https://stackoverflow.com/questions/10682019/android-two-finger-rotation
+
 public class CustomView extends View {
 
     private float mPositionX, mPositionY;
@@ -54,6 +56,9 @@ public class CustomView extends View {
     float imageBackGroundX;
     float imageX;
     float imageY;
+    Bitmap dstBitmap;
+    float scaleX;
+    float scaleY;
 
     PointF start = new PointF();
     PointF mid = new PointF();
@@ -95,8 +100,8 @@ public class CustomView extends View {
         mPaintCircle = new Paint();
         mPaintCircle.setAntiAlias(true);
         mPaintCircle.setColor(Color.parseColor("#00ccff"));
-        mScaleDetector = new ScaleGestureDetector(getContext(),new ScaleListener());
-        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+     /*   getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -106,7 +111,7 @@ public class CustomView extends View {
 
             }
         });
-
+*/
         if (set == null)
             return;
         TypedArray ta = getContext().obtainStyledAttributes(set, R.styleable.CustomView);
@@ -119,12 +124,17 @@ public class CustomView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        mBitmap = resize(mBitmap, w, h);
+
+        // mBackGroundBitmap = Bitmap.createScaledBitmap(mBackGroundBitmap,getWidth(),getHeight(),true);
     }
+
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -144,13 +154,45 @@ public class CustomView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-   /*     imageX = (getWidth() - mBitmap.getWidth()) / 2;
-        imageY = (getHeight() - mBitmap.getHeight()) / 2;*/
-
+        float scalemWidth =(float) getWidth()/mBackGroundBitmap.getWidth();
+        float scalemHeight =(float) getHeight()/mBackGroundBitmap.getHeight();
+        float maxScale = Math.max(scalemWidth, scalemHeight);
         imageBackGroundX = (getWidth() - mBackGroundBitmap.getWidth()) / 2;
         imageBackGroundY = (getHeight() - mBackGroundBitmap.getHeight()) / 2;
 
-        canvas.drawBitmap(mBackGroundBitmap, imageBackGroundX, imageBackGroundY, null);
+
+        canvas.drawColor(Color.GREEN);
+
+        Matrix matrix = new Matrix();
+
+     /*   matrix.setTranslate(Math.round(getWidth() - mBackGroundBitmap.getWidth()) * .5f,
+                Math.round(getHeight() - mBackGroundBitmap.getHeight()) * .5f);
+
+        final float pivotX = mBackGroundBitmap.getWidth()/2f;
+        final float pivotY = mBackGroundBitmap.getHeight()/2f;
+        matrix.preScale(2f, 2f, pivotX, pivotY);*/
+        Log.d("TAG", "BmWidth: " + mBackGroundBitmap.getWidth() + "BmHeigth" + mBackGroundBitmap.getHeight());
+        Log.d("TAG", "viewWidth " + getWidth() + "viewWidth" + getHeight());
+
+
+        matrix.setScale(maxScale , maxScale , mBackGroundBitmap.getWidth() / 2, mBackGroundBitmap.getHeight() / 2);
+
+        matrix.postTranslate(Math.round(getWidth() - mBackGroundBitmap.getWidth()) * .5f,
+                Math.round(getHeight() - mBackGroundBitmap.getHeight()) * .5f);
+
+
+        // matrix.setScale(3f,3f);
+
+
+
+/*        matrix.setTranslate(Math.round(getWidth() - mBackGroundBitmap.getWidth()) * .5f,
+                Math.round(getHeight() - mBackGroundBitmap.getHeight()) * .5f);
+
+
+        matrix.preScale(2f, 2f,mBackGroundBitmap.getWidth()/2,mBackGroundBitmap.getHeight()/2);*/
+
+
+        canvas.drawBitmap(mBackGroundBitmap, matrix, null);
 
         drawBitmap(canvas);
 
@@ -160,9 +202,34 @@ public class CustomView extends View {
         canvas.save();
         canvas.translate(mPositionX, mPositionY);
         canvas.scale(mScaleFactor, mScaleFactor);
+        imageX = (getWidth() - mBitmap.getWidth()) / 2;
+        imageY = (getHeight() - mBitmap.getHeight()) / 2;
         canvas.drawBitmap(mBitmap, imageX, imageY, null);
         canvas.restore();
 
+    }
+
+    private static Bitmap resize(Bitmap image, int maxWidth, int maxHeight) {
+        if (maxHeight > 0 && maxWidth > 0) {
+            int width = image.getWidth();
+            int height = image.getHeight();
+            float ratioBitmap = (float) width / (float) height;
+            float ratioMax = (float) maxWidth / (float) maxHeight;
+
+            int finalWidth = maxWidth;
+            int finalHeight = maxHeight;
+            if (ratioMax > ratioBitmap) {
+                finalWidth = (int) ((float) maxHeight * ratioBitmap);
+            } else {
+                finalHeight = (int) ((float) maxWidth / ratioBitmap);
+            }
+
+            image = Bitmap.createScaledBitmap(image, finalWidth,
+                    finalHeight, true);
+            return image;
+        } else {
+            return image;
+        }
     }
 
     private Bitmap getResizedBitmap(Bitmap bitmap, int width, int height) {
