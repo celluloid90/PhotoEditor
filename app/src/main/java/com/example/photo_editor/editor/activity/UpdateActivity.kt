@@ -1,18 +1,22 @@
 package com.example.photo_editor.editor.activity
 
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
-import com.example.photo_editor.databinding.ActivityEditBinding
 import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.model.RatioModel
+import com.example.photo_editor.editor.utils.RoateImage
+import com.hoko.blur.HokoBlur
 import java.util.*
 
 class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
 
+    private var myUri: Uri? = null
+    private var bitmap: Bitmap? = null
     private lateinit var binding: ActivityUpdateBinding
     lateinit var itemName: ArrayList<String>
     lateinit var gifItemDescription: ArrayList<String>
@@ -22,6 +26,20 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         binding = ActivityUpdateBinding.inflate(layoutInflater)
         setContentView(binding.root)
         recyclerviewInitiate()
+        val extras = intent.extras
+        myUri = Uri.parse(extras!!.getString("imageUri"))
+        bitmap = RoateImage.getRotatedBitmap(this,myUri)
+
+        val outBitmap: Bitmap = HokoBlur.with(this)
+            .radius(60) //blur radius，max=25，default=5
+            .sampleFactor(3.0f) //scale factor，if factor=2，the width and height of a bitmap will be scale to 1/2 sizes，default=5
+            .forceCopy(false) //If scale factor=1.0f，the origin bitmap will be modified. You could set forceCopy=true to avoid it. default=false
+            .needUpscale(true) //After blurring，the bitmap will be upscaled to origin sizes，default=true
+            .processor() //build a blur processor
+            .blur(bitmap);
+
+        binding.editorView.setBackgroundPicture(outBitmap)
+        binding.editorView.setPicture(bitmap)
     }
 
     private fun recyclerviewInitiate() {
@@ -36,8 +54,7 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         for (i in 0 until itemName.size) {
             ratioModelList.add(
                 RatioModel(
-                    itemName[i],
-                    ratioImage?.getResourceId(i, 0)!!
+                    itemName[i], ratioImage?.getResourceId(i, 0)!!
                 )
             )
         }
@@ -47,8 +64,8 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
 
     override fun onItemClick(position: Int) {
         if (position == 0) {
-            binding.editorView.setRatio(0f, 0f)
-        } else if (position == 1){
+            binding.editorView.setRatio((bitmap!!.width.toFloat()), bitmap!!.height.toFloat())
+        } else if (position == 1) {
             binding.editorView.setRatio(1f, 1f)
         }
 

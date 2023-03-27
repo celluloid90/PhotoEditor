@@ -8,9 +8,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -195,6 +197,28 @@ public class CustomView extends View {
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
 
         drawBitmap(canvas);
+
+
+      /*  Paint mPaint = new Paint();
+        int width = this.getWidth();
+        int height = this.getHeight();
+
+        mPaint.setAntiAlias(true);
+        mPaint.setColor(Color.GRAY);
+        mPaint.setStyle(Paint.Style.FILL);
+        //canvas.drawPaint(mPaint);
+
+        canvas.drawBitmap(mBackGroundBitmap,0,0,null);
+
+        float rectWidth = 1000; *//*Utils.dpToPx(100.0f)*//*
+
+        Path circularPath = new Path();
+        circularPath.addCircle(width / 2.0f, rectWidth / 2.0f, rectWidth / 3.0f, Path.Direction.CCW);
+        canvas.clipPath(circularPath, Region.Op.DIFFERENCE);
+
+        mPaint.setColor(Color.GRAY);
+        canvas.drawRect((width - rectWidth) / 2.0f, 0.0f, ((width - rectWidth) / 2.0f) + rectWidth, rectWidth, mPaint);
+*/
 
     }
 
