@@ -3,6 +3,7 @@ package com.example.photo_editor.editor.activity
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
@@ -30,6 +31,7 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         myUri = Uri.parse(extras!!.getString("imageUri"))
         bitmap = RoateImage.getRotatedBitmap(this,myUri)
 
+
         val outBitmap: Bitmap = HokoBlur.with(this)
             .radius(60) //blur radius，max=25，default=5
             .sampleFactor(3.0f) //scale factor，if factor=2，the width and height of a bitmap will be scale to 1/2 sizes，default=5
@@ -40,6 +42,17 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
 
         binding.editorView.setBackgroundPicture(outBitmap)
         binding.editorView.setPicture(bitmap)
+        binding.editorView.setLeftString("center")
+
+        binding.left.setOnClickListener {
+            binding.editorView.setLeftString("left")
+        }
+        binding.center.setOnClickListener {
+            binding.editorView.setLeftString("center")
+        }
+        binding.right.setOnClickListener {
+            binding.editorView.setLeftString("right")
+        }
     }
 
     private fun recyclerviewInitiate() {

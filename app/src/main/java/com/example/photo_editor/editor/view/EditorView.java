@@ -2,27 +2,20 @@ package com.example.photo_editor.editor.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.example.photo_editor.R;
+import com.example.photo_editor.editor.utils.ResizeBitmap;
 
 /*
 
@@ -36,6 +29,9 @@ public class EditorView extends View {
     Bitmap mBackGroundBitmap;
     BitmapDrawable mDrawable;
     Bitmap mBitmap;
+    String left, center, right;
+    String recievedString;
+    boolean isZoomed;
 
 
     public EditorView(Context context) {
@@ -74,36 +70,38 @@ public class EditorView extends View {
 
     }
 
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+    }
+
     public void setRatio(float w, float h) {
         mRatio = (float) w / h;
         invalidate();
     }
 
+    public void setLeftString(String recievedString) {
+        this.recievedString = recievedString;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        Log.d("TAG", "bmHight: " + mBackGroundBitmap.getHeight());
-        Log.d("TAG", "bmWidth: " + mBackGroundBitmap.getHeight());
-
         int width = canvas.getWidth();
         int height = canvas.getHeight();
-        Log.d("TAG", "width: " + width + " height :" + height);
-
         RectF myRect = new RectF(0f, 0f, 1f, 1f);
-
         if (mRatio >= 1f) {
             myRect.right = 1f;
             myRect.bottom = myRect.right / mRatio;
-        } else {
+        } else if (mRatio < 1f) {
             myRect.bottom = 1f;
             myRect.right = myRect.bottom * mRatio;
         }
 
         float rectW = height * mRatio;
         float rectH = width / mRatio;
-        Log.d("TAG", "h: " + rectW);
-        Log.d("TAG", "w: " + rectH);
+        Log.d("TIKTIK", "h: " + rectW);
+        Log.d("TIKTIK", "w: " + rectH);
 
         rectW = width * myRect.width();
         rectH = height * myRect.height();
@@ -126,14 +124,67 @@ public class EditorView extends View {
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
         canvas.drawRect(rect, paint);
         canvas.restore();
-        drawBitmap(canvas);
+        //drawBitmap(canvas, rect);
+
     }
 
-    private void drawBitmap(Canvas canvas) {
+
+    private void drawBitmap(Canvas canvas, RectF rectF) {
         canvas.save();
-        float pointX = (getWidth() - mBitmap.getWidth()) / 2;
-        float pointy = (getHeight() - mBitmap.getHeight()) / 2;
-        canvas.drawBitmap(mBitmap, pointX, pointy, null);
+        float ratioRect = rectF.width() / rectF.height();
+        float ratioBitmap = (float) mBitmap.getWidth() / (float) mBitmap.getHeight();
+        Log.d("TAG", "ratioBitmap: " + ratioBitmap);
+        Log.d("TAG", "ratioRect: " + ratioRect);
+        Log.d("TAG", "bmW: " + mBitmap.getWidth());
+        Log.d("TAG", "bmH: " + mBitmap.getHeight());
+        float finalWIdth = rectF.width();
+        float finalHeight = rectF.height();
+        Log.d("TAG", "1stW: " + finalWIdth + " " + "1stH" + finalHeight);
+        if (ratioRect >= ratioBitmap) {
+            finalWIdth = finalHeight * ratioBitmap;
+            Log.d("TAG", "afterWidth: " + finalWIdth);
+        } else {
+            finalHeight = finalWIdth / ratioBitmap;
+            Log.d("TAG", "afterHeight: " + finalWIdth);
+
+        }
+        Matrix matrix = new Matrix();
+        float getPosition = (rectF.width() - finalWIdth) / 2;
+        float getpositionY = (rectF.height() - finalHeight) / 2;
+        // matrix.setTranslate(rectF.left+getPosition, rectF.top+getpositionY);
+
+
+        float l = rectF.centerX() - finalWIdth / 2f;
+        float t = rectF.centerY() - finalHeight / 2f;
+        Log.d("TAG", "rectF.centerX(): " + rectF.centerX());
+        Log.d("TAG", "rectF.width(): " + rectF.width());
+        Log.d("TAG", "rectF.height(): " + rectF.height());
+        float r = l + finalWIdth;
+        float b = t + finalHeight;
+
+        float scale = finalWIdth / (float) mBitmap.getWidth();
+
+
+        matrix.setScale(scale, scale);
+        matrix.postTranslate(l, t);
+
+      /*  if (recievedString.equals("center")) {
+            matrix.postTranslate(l, t);
+            invalidate();
+        }
+        else if(recievedString.equals("left")){
+             matrix.postTranslate(rectF.left,t);
+        }
+        else if ((recievedString.equals("right"))){
+            matrix.postTranslate(rectF.width()- mBitmap.getWidth(),t);
+        }*/
+
+        canvas.drawBitmap(mBitmap, matrix, null);
+
+
+        //canvas.drawBitmap(mBitmap, null, new RectF(l , t, r, b), null);
+
+
         canvas.restore();
     }
 
@@ -142,9 +193,6 @@ public class EditorView extends View {
         float scaleWidth = rect.width() / mBackGroundBitmap.getWidth();
         float scaleHeight = rect.height() / mBackGroundBitmap.getHeight();
         float salePoint = Math.max(scaleWidth, scaleHeight);
-
-        Log.d("TAG", "left " + rect.left + "top " + rect.top + "right " + rect.right + "bottom " + rect.bottom);
-        Log.d("TAG", "width " + rect.width() + "height " + rect.height());
 
         Matrix matrix = new Matrix();
 
