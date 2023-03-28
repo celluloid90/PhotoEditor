@@ -90,21 +90,55 @@ public class EditorView extends View {
         int width = canvas.getWidth();
         int height = canvas.getHeight();
         RectF myRect = new RectF(0f, 0f, 1f, 1f);
-        if (mRatio >= 1f) {
-            myRect.right = 1f;
-            myRect.bottom = myRect.right / mRatio;
-        } else if (mRatio < 1f) {
-            myRect.bottom = 1f;
-            myRect.right = myRect.bottom * mRatio;
+
+        float newWidth = width;
+        float newHeight = height;
+
+        if (mRatio >= 1.0f) {
+           /* newHeight = newWidth / mRatio;
+
+            if (newHeight > height) {
+                newWidth = height;
+                newHeight = height / mRatio;
+            }*/
+            newHeight = newWidth / mRatio;
+            if (newHeight > height) {
+                newHeight = height;
+                newWidth = height * mRatio;
+            }
+
+        } else {
+           /* newWidth = newHeight * mRatio;
+            if (newWidth>width){
+                newHeight = width;
+                newWidth = width * mRatio;
+            }*/
+            newWidth = newHeight * mRatio;
+            if (newWidth > width) {
+                newWidth = width;
+                newHeight = width / mRatio;
+            }
         }
 
-        float rectW = height * mRatio;
-        float rectH = width / mRatio;
+        /*if (mRatio >= 1f) {
+            myRect.right = width;
+            myRect.bottom = width / mRatio;
+        } else {
+            myRect.bottom = height;
+            myRect.right = height * mRatio;
+            if (myRect.right>width){
+                myRect.right = height*mRatio;
+                myRect.bottom = height;
+            }
+        }*/
+        float rectW = newWidth;
+        float rectH = newHeight;
         Log.d("TIKTIK", "h: " + rectW);
         Log.d("TIKTIK", "w: " + rectH);
 
-        rectW = width * myRect.width();
-        rectH = height * myRect.height();
+
+        /*rectW = width * myRect.width();
+        rectH = height * myRect.height();*/
 
         RectF rect = new RectF();
         rect.top = ((height - rectH) / 2);
@@ -112,10 +146,16 @@ public class EditorView extends View {
 
         rect.right = (rect.left + rectW);
         rect.bottom = (rect.top + rectH);
+        Log.d("TAG", "left: " + rect.left + "top: " + rect.top + "right: " + rect.right + "bottom: " + rect.bottom);
+        Log.d("TAG", "width: " + width + " " + "height: " + height + " ratio: " + mRatio);
 
         Matrix matrix = scaleMatrix(rect, mBackGroundBitmap);
-
         Paint paint = new Paint();
+        paint.setColor(Color.BLUE);
+        //canvas.drawRect(rect, paint);
+        canvas.drawBitmap(mBitmap,null,rect,null);
+
+        /*Paint paint = new Paint();
         paint.setColor(Color.TRANSPARENT);
         // canvas.drawBitmap(mBackGroundBitmap,matrix,paint);
 
@@ -123,7 +163,7 @@ public class EditorView extends View {
         canvas.clipRect(rect);
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
         canvas.drawRect(rect, paint);
-        canvas.restore();
+        canvas.restore();*/
         //drawBitmap(canvas, rect);
 
     }
