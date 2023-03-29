@@ -40,7 +40,7 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
             .processor() //build a blur processor
             .blur(bitmap);
 
-        binding.editorView.setBackgroundPicture(outBitmap)
+        binding.editorView.setBackgroundPicture(bitmap)
         binding.editorView.setPicture(bitmap)
         binding.editorView.setLeftString("center")
 

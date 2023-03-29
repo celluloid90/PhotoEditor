@@ -77,6 +77,7 @@ public class EditorView extends View {
 
     public void setRatio(float w, float h) {
         mRatio = (float) w / h;
+        Log.d("log", "setRatio: " + mRatio);
         invalidate();
     }
 
@@ -87,9 +88,9 @@ public class EditorView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        Log.d("log", "onDraw: " + mRatio);
         int width = canvas.getWidth();
         int height = canvas.getHeight();
-        RectF myRect = new RectF(0f, 0f, 1f, 1f);
 
         float newWidth = width;
         float newHeight = height;
@@ -120,17 +121,6 @@ public class EditorView extends View {
             }
         }
 
-        /*if (mRatio >= 1f) {
-            myRect.right = width;
-            myRect.bottom = width / mRatio;
-        } else {
-            myRect.bottom = height;
-            myRect.right = height * mRatio;
-            if (myRect.right>width){
-                myRect.right = height*mRatio;
-                myRect.bottom = height;
-            }
-        }*/
         float rectW = newWidth;
         float rectH = newHeight;
         Log.d("TIKTIK", "h: " + rectW);
@@ -146,16 +136,52 @@ public class EditorView extends View {
 
         rect.right = (rect.left + rectW);
         rect.bottom = (rect.top + rectH);
-        Log.d("TAG", "left: " + rect.left + "top: " + rect.top + "right: " + rect.right + "bottom: " + rect.bottom);
-        Log.d("TAG", "width: " + width + " " + "height: " + height + " ratio: " + mRatio);
 
-        Matrix matrix = scaleMatrix(rect, mBackGroundBitmap);
+        Matrix matrix = new Matrix();
         Paint paint = new Paint();
-        paint.setColor(Color.BLUE);
-        //canvas.drawRect(rect, paint);
-        canvas.drawBitmap(mBitmap,null,rect,null);
+        paint.setColor(Color.rgb(255, 0, 0));
+        paint.setAlpha(120);
+        float scaleWidth = (rect.width() / mBackGroundBitmap.getWidth());
+        float scaleHeight = (rect.height() / mBackGroundBitmap.getHeight());
+        float scalePosition = Math.max(scaleWidth, scaleHeight);
 
-        /*Paint paint = new Paint();
+        Log.d("saadsa", "rectWidth: " + rect.width() + "rectHeight: " + rect.height());
+        Log.d("saadsa", "bmWidth: " + mBackGroundBitmap.getWidth() + "bmHeight: " + mBackGroundBitmap.getHeight());
+
+        float translateX = (rect.width() - mBackGroundBitmap.getWidth()) / 2;
+        float translatey = (rect.height() - mBackGroundBitmap.getHeight()) / 2;
+        Log.d("saadsa", "translateX position: " + translateX);
+        Log.d("saadsa", "translateY position: " + translatey);
+
+        /*matrix.setTranslate(rect.left+translateX, rect.top+translatey);
+        matrix.postScale(scalePosition, scalePosition,getWidth()/2,getHeight()/2);*/
+        //matrix.postTranslate(rect.left + translateX, rect.top + translatey);
+        float pointX = (getWidth() - mBackGroundBitmap.getWidth()) / 2;
+        float pointY = (getHeight() - mBackGroundBitmap.getHeight()) / 2;
+
+        /*matrix.postTranslate(pointX, pointY);
+        matrix.postScale(scalePosition, scalePosition, rect.left + rect.width() / 2, rect.top + rect.height() / 2);
+*/
+
+        matrix.setScale(scalePosition, scalePosition, getWidth() / 2, getHeight() / 2);
+        matrix.preTranslate(rect.left + translateX, rect.top + translatey);
+
+        canvas.save();
+        canvas.clipRect(rect);
+        canvas.drawBitmap(mBackGroundBitmap, matrix, null);
+        canvas.drawRect(rect, paint);
+        canvas.restore();
+
+        //canvas.drawBitmap(mBitmap,0,0,null);
+
+
+        //    Matrix matrix = scaleMatrix(rect, mBackGroundBitmap);
+
+
+        //canvas.drawRect(rect, paint);
+
+
+      /*  Paint paint = new Paint();
         paint.setColor(Color.TRANSPARENT);
         // canvas.drawBitmap(mBackGroundBitmap,matrix,paint);
 
@@ -169,7 +195,7 @@ public class EditorView extends View {
     }
 
 
-    private void drawBitmap(Canvas canvas, RectF rectF) {
+   /* private void drawBitmap(Canvas canvas, RectF rectF) {
         canvas.save();
         float ratioRect = rectF.width() / rectF.height();
         float ratioBitmap = (float) mBitmap.getWidth() / (float) mBitmap.getHeight();
@@ -208,7 +234,7 @@ public class EditorView extends View {
         matrix.setScale(scale, scale);
         matrix.postTranslate(l, t);
 
-      /*  if (recievedString.equals("center")) {
+      *//*  if (recievedString.equals("center")) {
             matrix.postTranslate(l, t);
             invalidate();
         }
@@ -217,7 +243,7 @@ public class EditorView extends View {
         }
         else if ((recievedString.equals("right"))){
             matrix.postTranslate(rectF.width()- mBitmap.getWidth(),t);
-        }*/
+        }*//*
 
         canvas.drawBitmap(mBitmap, matrix, null);
 
@@ -226,20 +252,5 @@ public class EditorView extends View {
 
 
         canvas.restore();
-    }
-
-    private Matrix scaleMatrix(RectF rect, Bitmap mBackGroundBitmap) {
-
-        float scaleWidth = rect.width() / mBackGroundBitmap.getWidth();
-        float scaleHeight = rect.height() / mBackGroundBitmap.getHeight();
-        float salePoint = Math.max(scaleWidth, scaleHeight);
-
-        Matrix matrix = new Matrix();
-
-
-        matrix.setTranslate(rect.left + (rect.width() - mBackGroundBitmap.getWidth()) / 2, rect.top + (rect.height() - mBackGroundBitmap.getHeight()) / 2);
-        matrix.postScale(salePoint, salePoint, rect.centerX(), rect.centerY());
-        return matrix;
-    }
-
+    }*/
 }
