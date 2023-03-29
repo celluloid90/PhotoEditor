@@ -6,14 +6,16 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.AttributeSet
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.OnScaleGestureListener
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
-import android.view.View
+import android.widget.ImageView
 import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
+import com.bcl.android.collage_editor.utils.ImageUtils
 import kotlin.math.max
 
 
@@ -24,7 +26,7 @@ import kotlin.math.max
  **/
 class CustomView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+) : ImageView(context, attrs, defStyleAttr) {
 
     var path1: Path
     var path2: Path
@@ -47,6 +49,8 @@ class CustomView @JvmOverloads constructor(
     private var pointerDown: Boolean = false
     private var pointerRegionIndex: Int = -1
     private var pathLists: ArrayList<Path> = ArrayList()
+    private var startAngle: Double = 0.0
+    private var rotationAngle: Float = 0f
 
     init {
         path1 = Path()
@@ -60,6 +64,8 @@ class CustomView @JvmOverloads constructor(
 
         paint2 = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         paint2.style = Paint.Style.FILL
+
+        scaleType = ScaleType.MATRIX
 
         corEffect = CornerPathEffect(0.0f)
         paint1.pathEffect = corEffect
@@ -122,23 +128,15 @@ class CustomView @JvmOverloads constructor(
         path2.reset()
 
         path1.moveTo((0f + gapBetweenFrames) * oldWidth, (0f + gapBetweenFrames) * oldHeight)
-        path1.lineTo(
-            (0.3f - gapBetweenFrames) * oldWidth, (0f + gapBetweenFrames) * oldHeight
-        )
-        path1.lineTo(
-            (0.7f - gapBetweenFrames) * oldWidth, (1f - gapBetweenFrames) * oldHeight
-        )
+        path1.lineTo((0.6f - gapBetweenFrames) * oldWidth, (0f + gapBetweenFrames) * oldHeight)
+        path1.lineTo((0.4f) * oldWidth, (1f - gapBetweenFrames) * oldHeight)
         path1.lineTo((0f + gapBetweenFrames) * oldWidth, (1f - gapBetweenFrames) * oldHeight)
         path1.close()
 
-        path2.moveTo(
-            (0.3f + gapBetweenFrames) * oldWidth, (0f + gapBetweenFrames) * oldHeight
-        )
+        path2.moveTo((0.6f) * oldWidth, (0f + gapBetweenFrames) * oldHeight)
         path2.lineTo((1f - gapBetweenFrames) * oldWidth, (0f + gapBetweenFrames) * oldHeight)
         path2.lineTo((1f - gapBetweenFrames) * oldWidth, (1f - gapBetweenFrames) * oldHeight)
-        path2.lineTo(
-            (0.70f + gapBetweenFrames) * oldWidth, (1f - gapBetweenFrames) * oldHeight
-        )
+        path2.lineTo((0.4f + gapBetweenFrames) * oldWidth, (1f - gapBetweenFrames) * oldHeight)
         path2.close()
 
         invalidate()
@@ -153,15 +151,15 @@ class CustomView @JvmOverloads constructor(
         path2.reset()
 
         path1.moveTo((0f + gapBetweenFrames) * w, (0f + gapBetweenFrames) * h)
-        path1.lineTo((0.3f - gapBetweenFrames) * w, (0f + gapBetweenFrames) * h)
-        path1.lineTo((0.7f - gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
+        path1.lineTo((0.6f - gapBetweenFrames) * w, (0f + gapBetweenFrames) * h)
+        path1.lineTo((0.4f) * w, (1f - gapBetweenFrames) * h)
         path1.lineTo((0f + gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
         path1.close()
 
-        path2.moveTo((0.3f + gapBetweenFrames) * w, (0f + gapBetweenFrames) * h)
+        path2.moveTo((0.6f) * w, (0f + gapBetweenFrames) * h)
         path2.lineTo((1f - gapBetweenFrames) * w, (0f + gapBetweenFrames) * h)
         path2.lineTo((1f - gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
-        path2.lineTo((0.70f + gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
+        path2.lineTo((0.4f + gapBetweenFrames) * w, (1f - gapBetweenFrames) * h)
         path2.close()
 
         for (i in pathLists.indices) {
@@ -177,8 +175,18 @@ class CustomView @JvmOverloads constructor(
 
             val scale: Float = max(w / (width / 2f), h / (height / 2f))
             mMatrix = Matrix()
-            mMatrix.setScale(scale, scale)
-            mMatrix.postTranslate((w - scale * (width / 2f)) / 2f, (h - scale * (height / 2f)) / 2f)
+            Log.d(
+                "TAG",
+                "onSizeChanged: " + region.bounds.width().toFloat() + " " + region.bounds.height()
+                    .toFloat()
+            )
+            mMatrix.set(
+                ImageUtils.createMatrixToDrawImageInCenterView(
+                    region, bitmapLists[i].width.toFloat(), bitmapLists[i].height.toFloat()
+                )
+            )
+//            mMatrix.setScale(scale, scale)
+//            mMatrix.postTranslate((w - scale * (width / 2f)) / 2f, (h - scale * (height / 2f)) / 2f)
             matrixList.add(mMatrix)
         }
     }
@@ -200,7 +208,6 @@ class CustomView @JvmOverloads constructor(
             canvas?.save()
         }
 
-
 //        canvas?.clipPath(path2)
 //        canvas?.drawBitmap(bitmapLists[1], Matrix(), paint2)
 
@@ -221,11 +228,19 @@ class CustomView @JvmOverloads constructor(
                     if (regionList[i].contains(point.x, point.y)) {
                         pointerDown = true
                         pointerRegionIndex = i
+                        startAngle = getAngle(point.x.toDouble(), point.y.toDouble());
                     }
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
+                for (i in regionList.indices) {
+                    if (regionList[i].contains(point.x, point.y)) {
+                        val currentAngle = getAngle(point.x.toDouble(), point.y.toDouble())
+                        rotationAngle = (startAngle - currentAngle).toFloat()
+                        startAngle = currentAngle
+                    }
+                }
             }
 
             MotionEvent.ACTION_UP -> {
@@ -236,9 +251,36 @@ class CustomView @JvmOverloads constructor(
         if (pointerDown || regionList[pointerRegionIndex].contains(point.x, point.y)) {
             event.let { gestureDetectorList[pointerRegionIndex].onTouchEvent(it) }
             event.let { scaleDetectorList[pointerRegionIndex].onTouchEvent(it) }
+//            updateMatrix(rotationAngle, pointerRegionIndex)
         }
 
         return true
+    }
+
+    private fun updateMatrix(delta: Float, index: Int) {
+        matrixList[index].postRotate(
+            delta, (width / 2).toFloat(), 0f
+        ); //need to find out the coordination of the center of the image
+    }
+
+    private fun getAngle(xTouch: Double, yTouch: Double): Double {
+        val x: Double = xTouch - width / 2.0
+        val y: Double = height - yTouch - height / 2.0
+        return when (getQuadrant(x, y)) {
+            1 -> Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
+            2 -> 180 - Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
+            3 -> 180 + -1 * Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
+            4 -> 360 + Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
+            else -> 0.0
+        }
+    }
+
+    private fun getQuadrant(x: Double, y: Double): Int {
+        return if (x >= 0) {
+            if (y >= 0) 1 else 4
+        } else {
+            if (y >= 0) 2 else 3
+        }
     }
 
     fun updateEdgeSmooth(edgeGapValue: Float) {
@@ -252,7 +294,8 @@ class CustomView @JvmOverloads constructor(
         this.uriLists.addAll(uriLists)
 
         for (uri in this.uriLists) {
-            bitmapLists.add(MediaStore.Images.Media.getBitmap(context.contentResolver, uri))
+            var bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            bitmapLists.add(ImageUtils.rotateImageIfRequired(context, bitmap, uri)!!)
         }
         invalidate()
     }
