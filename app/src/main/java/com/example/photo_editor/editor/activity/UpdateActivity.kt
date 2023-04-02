@@ -11,6 +11,7 @@ import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.model.RatioModel
 import com.example.photo_editor.editor.utils.RoateImage
+import com.example.photo_editor.editor.view.EditorView
 import com.hoko.blur.HokoBlur
 import java.util.*
 
@@ -22,10 +23,13 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
     lateinit var itemName: ArrayList<String>
     lateinit var gifItemDescription: ArrayList<String>
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUpdateBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
         recyclerviewInitiate()
         val extras = intent.extras
         myUri = Uri.parse(extras!!.getString("imageUri"))
@@ -42,7 +46,7 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
 
         binding.editorView.setBackgroundPicture(outBitmap)
         binding.editorView.setPicture(bitmap)
-        binding.editorView.setLeftString("center")
+        binding.editorView.setLeftString(" ")
 
         binding.left.setOnClickListener {
             binding.editorView.setLeftString("left")

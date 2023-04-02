@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Toast;
 
@@ -20,6 +21,8 @@ import com.example.photo_editor.editor.utils.ResizeBitmap;
 /*
 
 https://developer.android.com/codelabs/advanced-android-kotlin-training-clipping-canvas-objects#0
+
+http://www.java2s.com/example/android/graphics/scale-bitmap-image-in-imageview-center-crop.html
 
 * */
 
@@ -35,7 +38,17 @@ public class EditorView extends View {
     private RectF rect;
     Matrix matrix;
     Matrix matrixMain;
-
+    float bitmapWidth;
+    float bitmapHeight;
+    float bmRatio;
+    float rectRatio;
+    float finalWidth;
+    float finalHeight;
+    float positionX;
+    float positionY;
+    float scaleValueX;
+    float scaleValueY;
+    float scaleValueFinal;
 
     public EditorView(Context context) {
         super(context);
@@ -82,60 +95,108 @@ public class EditorView extends View {
 
     public void setRatio(float w, float h) {
         mRatio = (float) w / h;
+
+        scaleBackGroundMatrix(rect, matrix);
+        scaleForGroundImageMatrix(rect, matrixMain);
         invalidate();
     }
 
     public void setLeftString(String recievedString) {
         this.recievedString = recievedString;
+
+        if (recievedString.equals("left")) {
+            matrixMain.setScale(scaleValueFinal, scaleValueFinal);
+            Log.d("TAG", "setLeftString: " + scaleValueFinal);
+            if (rect.width() > finalWidth) {
+                matrixMain.postTranslate(0, rect.top);
+            } else {
+                matrixMain.postTranslate(rect.left, rect.top);
+            }
+        } else if (recievedString.equals("right")) {
+            matrixMain.setScale(scaleValueFinal, scaleValueFinal);
+            Log.d("TAG", "setLeftString: " + scaleValueFinal);
+            if (rect.width() > finalWidth) {
+                matrixMain.postTranslate(rect.right - finalWidth, rect.top);
+            } else {
+                matrixMain.postTranslate(rect.left, rect.bottom - finalHeight);
+            }
+        } else if (recievedString.equals("center")) {
+            if (isZoomed == false) {
+
+
+                float scalingNewX = rect.width() / mBitmap.getWidth();
+                float scalingNewY = rect.height() / mBitmap.getHeight();
+                float scaleMaX = Math.max(scalingNewX, scalingNewY);
+                float scaleWidth = scaleMaX*mBitmap.getWidth();
+                float scaleHeight = scaleMaX*mBitmap.getHeight();
+
+
+                matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
+                matrixMain.postScale(scaleMaX, scaleMaX, getWidth() / 2, getHeight() / 2);
+                isZoomed = true;
+
+                // matrixMain.postScale(rect.width(),rect.height(),getWidth()/2,getHeight()/2);
+
+            } else {
+                matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
+                matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth() / 2, getHeight() / 2);
+                isZoomed = false;
+            }
+        }
+
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        scaleBackGroundMatrix(canvas,rect,matrix);
-        scaleForGroundImageMatrix(canvas,rect,matrixMain);
+        canvas.save();
+        canvas.clipRect(rect);
+        canvas.drawBitmap(mBackGroundBitmap, matrix, null);
+        //     canvas.drawRect(rect, new Paint(Paint.ANTI_ALIAS_FLAG));
+        canvas.restore();
+
+        canvas.drawBitmap(mBitmap, matrixMain, null);
+
     }
 
-    private void scaleForGroundImageMatrix(Canvas canvas, RectF rect, Matrix matrixMain) {
-        float bitmapWidth = mBitmap.getWidth();
-        float bitmapHeight = mBitmap.getHeight();
+    private void scaleForGroundImageMatrix(RectF rect, Matrix matrixMain) {
+        bitmapWidth = mBitmap.getWidth();
+        bitmapHeight = mBitmap.getHeight();
 
-        float bmRatio = bitmapWidth / bitmapHeight;
-        float rectRatio = rect.width() / rect.height();
+        bmRatio = bitmapWidth / bitmapHeight;
+        rectRatio = rect.width() / rect.height();
 
-        float finalWidth = rect.width();
-        float finalHeight = rect.height();
+        finalWidth = rect.width();
+        finalHeight = rect.height();
 
         if (rectRatio >= bmRatio) {
             finalWidth = rect.height() * bmRatio;
         } else {
             finalHeight = rect.width() / bmRatio;
         }
-
-
-        float positionX = (rect.width() - mBitmap.getWidth()) / 2;
-        float positionY = (rect.height() - mBitmap.getHeight()) / 2;
+        positionX = (rect.width() - mBitmap.getWidth()) / 2;
+        positionY = (rect.height() - mBitmap.getHeight()) / 2;
         float positionFX = (rect.width() - finalWidth) / 2;
         float positionFY = (rect.height() - finalHeight) / 2;
 
-        float scaleValueX = (finalWidth / mBitmap.getWidth());
-        float scaleValueY = (finalHeight / mBitmap.getHeight());
-        float scaleValueFinal = Math.max(scaleValueX, scaleValueY);
+        scaleValueX = (finalWidth / mBitmap.getWidth());
+        scaleValueY = (finalHeight / mBitmap.getHeight());
+        scaleValueFinal = Math.max(scaleValueX, scaleValueY);
         matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
-        matrixMain.postScale(scaleValueFinal, scaleValueFinal,getWidth()/2,getHeight()/2);
-        Log.d("TAG", "getWidth(): "+getWidth()+" getHeight(): "+getHeight());
-        Log.d("TAG", "rectW : "+rect.width()+" rectH: "+rect.width());
-        Log.d("TAG", "finalWidth: "+finalWidth+" finalHeight: "+finalHeight);
+        matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth() / 2, getHeight() / 2);
+
+        Log.d("TAG", "getWidth(): " + getWidth() + " getHeight(): " + getHeight());
+        Log.d("TAG", "rectW : " + rect.width() + " rectH: " + rect.height());
+        Log.d("TAG", "finalWidth: " + finalWidth + " finalHeight: " + finalHeight);
+        Log.d("TAG", "scaleForGroundImageMatrix: " + scaleValueFinal);
 
 
-
-        //   matrixMain.postScale(scaleValueFinal, scaleValueFinal, rect.left / 2 + mBitmap.getWidth() / 2, rect.left / 2 + mBitmap.getHeight() / 2);
-        canvas.drawBitmap(mBitmap, matrixMain, null);
     }
 
-    private void scaleBackGroundMatrix(Canvas canvas,RectF rect,Matrix matrix) {
-        int width = canvas.getWidth();
-        int height = canvas.getHeight();
+    private void scaleBackGroundMatrix(RectF rect, Matrix matrix) {
+        int width = getWidth();
+        int height = getHeight();
 
         float newWidth = width;
         float newHeight = height;
@@ -190,10 +251,10 @@ public class EditorView extends View {
         matrix.setScale(scalePosition, scalePosition, getWidth() / 2, getHeight() / 2);
         matrix.preTranslate(rect.left + translateX, rect.top + translatey);
 
-        canvas.save();
+       /* canvas.save();
         canvas.clipRect(rect);
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
         canvas.drawRect(rect, paint);
-        canvas.restore();
+        canvas.restore();*/
     }
 }
