@@ -16,6 +16,7 @@ import android.widget.ImageView
 import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
 import com.bcl.android.collage_editor.utils.ImageUtils
+import kotlin.math.atan2
 import kotlin.math.max
 
 
@@ -49,8 +50,8 @@ class CustomView @JvmOverloads constructor(
     private var pointerDown: Boolean = false
     private var pointerRegionIndex: Int = -1
     private var pathLists: ArrayList<Path> = ArrayList()
-    private var startAngle: Double = 0.0
-    private var rotationAngle: Float = 0f
+    private var prevAngle: Float = 0f
+    private var currentAngle: Float = 0f
 
     init {
         path1 = Path()
@@ -96,6 +97,7 @@ class CustomView @JvmOverloads constructor(
                     val factor = detector.scaleFactor
                     matrixList[i].postScale(factor, factor, width / 2f, height / 2f)
                     ViewCompat.postInvalidateOnAnimation(this@CustomView)
+
                     return true
                 }
             })
@@ -175,11 +177,6 @@ class CustomView @JvmOverloads constructor(
 
             val scale: Float = max(w / (width / 2f), h / (height / 2f))
             mMatrix = Matrix()
-            Log.d(
-                "TAG",
-                "onSizeChanged: " + region.bounds.width().toFloat() + " " + region.bounds.height()
-                    .toFloat()
-            )
             mMatrix.set(
                 ImageUtils.createMatrixToDrawImageInCenterView(
                     region, bitmapLists[i].width.toFloat(), bitmapLists[i].height.toFloat()
@@ -215,12 +212,14 @@ class CustomView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        /*event?.let { mGestureDetector!!.onTouchEvent(it) }
-        event?.let { mScaleDetector!!.onTouchEvent(it) }*/
-
         val point = Point()
         point.x = event!!.x.toInt()
         point.y = event.y.toInt()
+
+        if (event.pointerCount == 2) {
+            currentAngle = getAngle(event)
+            Log.d("TAG", "onTouchEvent: getAngle: $currentAngle $prevAngle")
+        }
 
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
@@ -228,19 +227,41 @@ class CustomView @JvmOverloads constructor(
                     if (regionList[i].contains(point.x, point.y)) {
                         pointerDown = true
                         pointerRegionIndex = i
-                        startAngle = getAngle(point.x.toDouble(), point.y.toDouble());
                     }
+                }
+                if (event.pointerCount == 2) {
+                    prevAngle = currentAngle
+                    Log.d("TAG", "onTouchEvent: assign to prev (down): $currentAngle $prevAngle")
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
-                for (i in regionList.indices) {
-                    if (regionList[i].contains(point.x, point.y)) {
-                        val currentAngle = getAngle(point.x.toDouble(), point.y.toDouble())
-                        rotationAngle = (startAngle - currentAngle).toFloat()
-                        startAngle = currentAngle
+                if (event.pointerCount == 2) {
+                    for (i in regionList.indices) {
+                        if (regionList[i].contains(
+                                event.getX(0).toInt(), event.getY(0).toInt()
+                            ) && regionList[i].contains(
+                                event.getX(1).toInt(), event.getY(1).toInt()
+                            )
+                        ) {
+//                            currentAngle = getAngle(event)
+
+                            val pivotX =
+                                regionList[i].bounds.left + (regionList[i].bounds.width() / 2f)
+                            val pivotY =
+                                regionList[i].bounds.top + (regionList[i].bounds.height() / 2f)
+                            Log.d("TAG", "onTouchEvent: $currentAngle $prevAngle")
+                            matrixList[i].postRotate(currentAngle - prevAngle, pivotX, pivotY)
+                            prevAngle = currentAngle
+                            Log.d("TAG", "onTouchEvent: assign to prev (move): $currentAngle $prevAngle")
+                        }
                     }
                 }
+            }
+
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_POINTER_DOWN -> {
+                prevAngle = currentAngle
+                Log.d("TAG", "onTouchEvent: assign to prev (pointer): $currentAngle $prevAngle")
             }
 
             MotionEvent.ACTION_UP -> {
@@ -251,36 +272,19 @@ class CustomView @JvmOverloads constructor(
         if (pointerDown || regionList[pointerRegionIndex].contains(point.x, point.y)) {
             event.let { gestureDetectorList[pointerRegionIndex].onTouchEvent(it) }
             event.let { scaleDetectorList[pointerRegionIndex].onTouchEvent(it) }
-//            updateMatrix(rotationAngle, pointerRegionIndex)
         }
 
         return true
     }
 
-    private fun updateMatrix(delta: Float, index: Int) {
-        matrixList[index].postRotate(
-            delta, (width / 2).toFloat(), 0f
-        ); //need to find out the coordination of the center of the image
-    }
+    private fun getAngle(event: MotionEvent?): Float {
+        val x1: Float = event!!.getX(0)
+        val y1: Float = event.getY(0)
+        val x2: Float = event.getX(1)
+        val y2: Float = event.getY(1)
+        val angle = atan2((y2 - y1).toDouble(), (x2 - x1).toDouble()).toFloat()
 
-    private fun getAngle(xTouch: Double, yTouch: Double): Double {
-        val x: Double = xTouch - width / 2.0
-        val y: Double = height - yTouch - height / 2.0
-        return when (getQuadrant(x, y)) {
-            1 -> Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
-            2 -> 180 - Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
-            3 -> 180 + -1 * Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
-            4 -> 360 + Math.asin(y / Math.hypot(x, y)) * 180 / Math.PI
-            else -> 0.0
-        }
-    }
-
-    private fun getQuadrant(x: Double, y: Double): Int {
-        return if (x >= 0) {
-            if (y >= 0) 1 else 4
-        } else {
-            if (y >= 0) 2 else 3
-        }
+        return Math.toDegrees(angle.toDouble()).toFloat()
     }
 
     fun updateEdgeSmooth(edgeGapValue: Float) {
