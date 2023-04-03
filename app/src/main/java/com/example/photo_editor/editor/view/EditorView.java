@@ -8,15 +8,16 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.example.photo_editor.editor.utils.ResizeBitmap;
+import com.example.photo_editor.editor.utils.BlurBitmap;
+import com.example.photo_editor.editor.utils.CheckButtonType;
+import com.example.photo_editor.editor.utils.RoateImage;
 
 /*
 
@@ -28,27 +29,26 @@ http://www.java2s.com/example/android/graphics/scale-bitmap-image-in-imageview-c
 
 public class EditorView extends View {
 
-    float mRatio;
-    Bitmap mBackGroundBitmap;
-    BitmapDrawable mDrawable;
-    Bitmap mBitmap;
-    String left, center, right;
-    String recievedString;
-    boolean isZoomed;
+    private Uri uri;
+    private float mRatio;
+    private Bitmap mBackGroundBitmap;
+    private Bitmap mBitmap;
+    private boolean isZoomed;
     private RectF rect;
-    Matrix matrix;
-    Matrix matrixMain;
-    float bitmapWidth;
-    float bitmapHeight;
-    float bmRatio;
-    float rectRatio;
-    float finalWidth;
-    float finalHeight;
-    float positionX;
-    float positionY;
-    float scaleValueX;
-    float scaleValueY;
-    float scaleValueFinal;
+    private Matrix matrix;
+    private Matrix matrixMain;
+    private float bitmapWidth;
+    private float bitmapHeight;
+    private float bmRatio;
+    private float rectRatio;
+    private float finalWidth;
+    private float finalHeight;
+    private float positionX;
+    private float positionY;
+    private float scaleValueX;
+    private float scaleValueY;
+    private float scaleValueFinal;
+    CheckButtonType checkButtonType;
 
     public EditorView(Context context) {
         super(context);
@@ -76,16 +76,12 @@ public class EditorView extends View {
         matrix = new Matrix();
         matrixMain = new Matrix();
     }
-
-    public void setBackgroundPicture(Bitmap bitmap) {
-        this.mBackGroundBitmap = bitmap;
+    public void setImageUri(Uri uri){
+        this.uri = uri;
+        mBitmap = RoateImage.getRotatedBitmap(getContext(),uri);
+        mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(),uri);
+        mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap,getContext());
         invalidate();
-    }
-
-    public void setPicture(Bitmap bitmap) {
-        this.mBitmap = bitmap;
-        invalidate();
-
     }
 
     @Override
@@ -101,41 +97,32 @@ public class EditorView extends View {
         invalidate();
     }
 
-    public void setLeftString(String recievedString) {
-        this.recievedString = recievedString;
+    public void checkClickedButtonType(CheckButtonType checkButtonType) {
+        this.checkButtonType = checkButtonType;
 
-        if (recievedString.equals("left")) {
+        if (checkButtonType.equals(CheckButtonType.LEFT) ) {
             matrixMain.setScale(scaleValueFinal, scaleValueFinal);
-            Log.d("TAG", "setLeftString: " + scaleValueFinal);
             if (rect.width() > finalWidth) {
                 matrixMain.postTranslate(0, rect.top);
             } else {
                 matrixMain.postTranslate(rect.left, rect.top);
             }
-        } else if (recievedString.equals("right")) {
+        } else if (checkButtonType.equals(CheckButtonType.RIGHT)) {
             matrixMain.setScale(scaleValueFinal, scaleValueFinal);
-            Log.d("TAG", "setLeftString: " + scaleValueFinal);
             if (rect.width() > finalWidth) {
                 matrixMain.postTranslate(rect.right - finalWidth, rect.top);
             } else {
                 matrixMain.postTranslate(rect.left, rect.bottom - finalHeight);
             }
-        } else if (recievedString.equals("center")) {
-            if (isZoomed == false) {
-
-
+        } else if (checkButtonType.equals(CheckButtonType.CENTER)) {
+            if (!isZoomed) {
                 float scalingNewX = rect.width() / mBitmap.getWidth();
                 float scalingNewY = rect.height() / mBitmap.getHeight();
                 float scaleMaX = Math.max(scalingNewX, scalingNewY);
-                float scaleWidth = scaleMaX*mBitmap.getWidth();
-                float scaleHeight = scaleMaX*mBitmap.getHeight();
-
 
                 matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
-                matrixMain.postScale(scaleMaX, scaleMaX, getWidth() / 2, getHeight() / 2);
+                matrixMain.postScale(scaleMaX, scaleMaX, rect.centerX(), rect.centerY());
                 isZoomed = true;
-
-                // matrixMain.postScale(rect.width(),rect.height(),getWidth()/2,getHeight()/2);
 
             } else {
                 matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
@@ -153,10 +140,8 @@ public class EditorView extends View {
         canvas.save();
         canvas.clipRect(rect);
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
-        //     canvas.drawRect(rect, new Paint(Paint.ANTI_ALIAS_FLAG));
-        canvas.restore();
-
         canvas.drawBitmap(mBitmap, matrixMain, null);
+        canvas.restore();
 
     }
 
@@ -177,20 +162,12 @@ public class EditorView extends View {
         }
         positionX = (rect.width() - mBitmap.getWidth()) / 2;
         positionY = (rect.height() - mBitmap.getHeight()) / 2;
-        float positionFX = (rect.width() - finalWidth) / 2;
-        float positionFY = (rect.height() - finalHeight) / 2;
 
         scaleValueX = (finalWidth / mBitmap.getWidth());
         scaleValueY = (finalHeight / mBitmap.getHeight());
         scaleValueFinal = Math.max(scaleValueX, scaleValueY);
         matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
         matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth() / 2, getHeight() / 2);
-
-        Log.d("TAG", "getWidth(): " + getWidth() + " getHeight(): " + getHeight());
-        Log.d("TAG", "rectW : " + rect.width() + " rectH: " + rect.height());
-        Log.d("TAG", "finalWidth: " + finalWidth + " finalHeight: " + finalHeight);
-        Log.d("TAG", "scaleForGroundImageMatrix: " + scaleValueFinal);
-
 
     }
 
@@ -208,9 +185,7 @@ public class EditorView extends View {
                 newHeight = height;
                 newWidth = height * mRatio;
             }
-
         } else {
-
             newWidth = newHeight * mRatio;
             if (newWidth > width) {
                 newWidth = width;
@@ -221,13 +196,11 @@ public class EditorView extends View {
         float rectW = newWidth;
         float rectH = newHeight;
 
-
         rect.top = ((height - rectH) / 2);
         rect.left = ((width - rectW) / 2);
 
         rect.right = (rect.left + rectW);
         rect.bottom = (rect.top + rectH);
-
 
         Paint paint = new Paint();
         paint.setColor(Color.TRANSPARENT);
@@ -238,23 +211,8 @@ public class EditorView extends View {
         float translateX = (rect.width() - mBackGroundBitmap.getWidth()) / 2;
         float translatey = (rect.height() - mBackGroundBitmap.getHeight()) / 2;
 
-        /*matrix.setTranslate(rect.left+translateX, rect.top+translatey);
-        matrix.postScale(scalePosition, scalePosition,getWidth()/2,getHeight()/2);*/
-        //matrix.postTranslate(rect.left + translateX, rect.top + translatey);
-        float pointX = (getWidth() - mBackGroundBitmap.getWidth()) / 2;
-        float pointY = (getHeight() - mBackGroundBitmap.getHeight()) / 2;
-
-        /*matrix.postTranslate(pointX, pointY);
-        matrix.postScale(scalePosition, scalePosition, rect.left + rect.width() / 2, rect.top + rect.height() / 2);
-*/
-
         matrix.setScale(scalePosition, scalePosition, getWidth() / 2, getHeight() / 2);
         matrix.preTranslate(rect.left + translateX, rect.top + translatey);
 
-       /* canvas.save();
-        canvas.clipRect(rect);
-        canvas.drawBitmap(mBackGroundBitmap, matrix, null);
-        canvas.drawRect(rect, paint);
-        canvas.restore();*/
     }
 }

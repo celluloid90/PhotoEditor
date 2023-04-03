@@ -3,16 +3,14 @@ package com.example.photo_editor.editor.activity
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
 import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.model.RatioModel
+import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
-import com.example.photo_editor.editor.view.EditorView
-import com.hoko.blur.HokoBlur
 import java.util.*
 
 class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
@@ -21,8 +19,6 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
     private var bitmap: Bitmap? = null
     private lateinit var binding: ActivityUpdateBinding
     lateinit var itemName: ArrayList<String>
-    lateinit var gifItemDescription: ArrayList<String>
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,29 +29,21 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         recyclerviewInitiate()
         val extras = intent.extras
         myUri = Uri.parse(extras!!.getString("imageUri"))
-        bitmap = RoateImage.getRotatedBitmap(this,myUri)
+        binding.editorView.setImageUri(myUri);
+        bitmap = RoateImage.getRotatedBitmap(this, myUri)
 
 
-        val outBitmap: Bitmap = HokoBlur.with(this)
-            .radius(60) //blur radius，max=25，default=5
-            .sampleFactor(3.0f) //scale factor，if factor=2，the width and height of a bitmap will be scale to 1/2 sizes，default=5
-            .forceCopy(false) //If scale factor=1.0f，the origin bitmap will be modified. You could set forceCopy=true to avoid it. default=false
-            .needUpscale(true) //After blurring，the bitmap will be upscaled to origin sizes，default=true
-            .processor() //build a blur processor
-            .blur(bitmap);
-
-        binding.editorView.setBackgroundPicture(outBitmap)
-        binding.editorView.setPicture(bitmap)
-        binding.editorView.setLeftString(" ")
+        binding.editorView.checkClickedButtonType(CheckButtonType.CENTER)
 
         binding.left.setOnClickListener {
-            binding.editorView.setLeftString("left")
+            binding.editorView.checkClickedButtonType(CheckButtonType.LEFT)
         }
+
         binding.center.setOnClickListener {
-            binding.editorView.setLeftString("center")
+            binding.editorView.checkClickedButtonType(CheckButtonType.CENTER)
         }
         binding.right.setOnClickListener {
-            binding.editorView.setLeftString("right")
+            binding.editorView.checkClickedButtonType(CheckButtonType.RIGHT)
         }
     }
 
