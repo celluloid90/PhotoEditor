@@ -3,6 +3,8 @@ package com.example.photo_editor.editor.activity
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.view.View.OnClickListener
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
@@ -13,7 +15,7 @@ import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
 import java.util.*
 
-class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
+class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, OnClickListener {
 
     private var myUri: Uri? = null
     private var bitmap: Bitmap? = null
@@ -25,26 +27,20 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         binding = ActivityUpdateBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
         recyclerviewInitiate()
         val extras = intent.extras
         myUri = Uri.parse(extras!!.getString("imageUri"))
         binding.editorView.setImageUri(myUri);
         bitmap = RoateImage.getRotatedBitmap(this, myUri)
 
-
         binding.editorView.checkClickedButtonType(CheckButtonType.CENTER)
+        initListener()
+    }
 
-        binding.left.setOnClickListener {
-            binding.editorView.checkClickedButtonType(CheckButtonType.LEFT)
-        }
-
-        binding.center.setOnClickListener {
-            binding.editorView.checkClickedButtonType(CheckButtonType.CENTER)
-        }
-        binding.right.setOnClickListener {
-            binding.editorView.checkClickedButtonType(CheckButtonType.RIGHT)
-        }
+    private fun initListener() {
+        binding.left.setOnClickListener(this);
+        binding.right.setOnClickListener(this);
+        binding.center.setOnClickListener(this);
     }
 
     private fun recyclerviewInitiate() {
@@ -68,6 +64,7 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
     }
 
     override fun onItemClick(position: Int) {
+        binding.editorView.checkClickedButtonType(CheckButtonType.DEFAULT)
         if (position == 0) {
             binding.editorView.setRatio((bitmap!!.width.toFloat()), bitmap!!.height.toFloat())
         } else if (position == 1) {
@@ -99,6 +96,16 @@ class UpdateActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener {
         }
         if (position == 9) {
             binding.editorView.setRatio(16f, 9f)
+        }
+    }
+
+    override fun onClick(v: View?) {
+        if (v == binding.left) {
+            binding.editorView.checkClickedButtonType(CheckButtonType.LEFT)
+        } else if (v == binding.center) {
+            binding.editorView.checkClickedButtonType(CheckButtonType.CENTER)
+        } else if (v == binding.right) {
+            binding.editorView.checkClickedButtonType(CheckButtonType.RIGHT)
         }
     }
 }

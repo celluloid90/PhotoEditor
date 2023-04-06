@@ -11,8 +11,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.ScaleGestureDetector.OnScaleGestureListener;
 import android.view.View;
 
+import androidx.annotation.LongDef;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.photo_editor.editor.utils.BlurBitmap;
@@ -49,58 +54,79 @@ public class EditorView extends View {
     private float scaleValueY;
     private float scaleValueFinal;
     CheckButtonType checkButtonType;
+    private int mLastAngle = 0;
+    private int mPivotX, mPivotY;
+    /* private ScaleGestureDetector mScaleDetector;*/
+    private float x, y;
+    private float mScaleFactor = 1.0f;
+    private final static float mMinZoom = 1.0f;
+    private final static float mMaxZoom = 5.0f;
+    private boolean buttonClicked;
+    float offsetFromCenterX = 0f, offsetFromCenterY = 0f;
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(@NonNull ScaleGestureDetector detector) {
+            mScaleFactor *= detector.getScaleFactor();
+            mScaleFactor = Math.max(mScaleFactor, Math.min(mScaleFactor, mMinZoom));
+            return true;
+        }
+    }
 
     public EditorView(Context context) {
         super(context);
-        init(null);
+        init(null, context);
     }
 
     public EditorView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(attrs);
+        init(attrs, context);
     }
 
     public EditorView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(attrs);
+        init(attrs, context);
 
     }
 
     public EditorView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(attrs);
+        init(attrs, context);
     }
 
-    public void init(@Nullable AttributeSet set) {
+    public void init(@Nullable AttributeSet set, Context context) {
         rect = new RectF();
         matrix = new Matrix();
         matrixMain = new Matrix();
+
+        //mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
     }
-    public void setImageUri(Uri uri){
+
+    public void setImageUri(Uri uri) {
         this.uri = uri;
-        mBitmap = RoateImage.getRotatedBitmap(getContext(),uri);
-        mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(),uri);
-        mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap,getContext());
+        mBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
+        mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
+        mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext());
         invalidate();
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-    }
 
     public void setRatio(float w, float h) {
+        buttonClicked = true;
         mRatio = (float) w / h;
-
         scaleBackGroundMatrix(rect, matrix);
+        float tx = 12f;
+        float ty = 10f;
         scaleForGroundImageMatrix(rect, matrixMain);
+        //matrixMain.postTranslate(tx, ty);
         invalidate();
     }
 
     public void checkClickedButtonType(CheckButtonType checkButtonType) {
         this.checkButtonType = checkButtonType;
-
-        if (checkButtonType.equals(CheckButtonType.LEFT) ) {
+        offsetFromCenterY=0f;
+        offsetFromCenterX=0f;
+        if (checkButtonType.equals(CheckButtonType.LEFT)) {
             matrixMain.setScale(scaleValueFinal, scaleValueFinal);
             if (rect.width() > finalWidth) {
                 matrixMain.postTranslate(0, rect.top);
@@ -115,17 +141,19 @@ public class EditorView extends View {
                 matrixMain.postTranslate(rect.left, rect.bottom - finalHeight);
             }
         } else if (checkButtonType.equals(CheckButtonType.CENTER)) {
+            float x = (rect.width() - mBitmap.getWidth()) / 2;
+            float y = (rect.height() - mBitmap.getHeight()) / 2;
             if (!isZoomed) {
                 float scalingNewX = rect.width() / mBitmap.getWidth();
                 float scalingNewY = rect.height() / mBitmap.getHeight();
                 float scaleMaX = Math.max(scalingNewX, scalingNewY);
 
-                matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
+                matrixMain.setTranslate(rect.left + x, rect.top + y);
                 matrixMain.postScale(scaleMaX, scaleMaX, rect.centerX(), rect.centerY());
                 isZoomed = true;
 
             } else {
-                matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
+                matrixMain.setTranslate(rect.left + x, rect.top + y);
                 matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth() / 2, getHeight() / 2);
                 isZoomed = false;
             }
@@ -135,15 +163,29 @@ public class EditorView extends View {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         canvas.save();
         canvas.clipRect(rect);
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
         canvas.drawBitmap(mBitmap, matrixMain, null);
         canvas.restore();
 
+
     }
+
 
     private void scaleForGroundImageMatrix(RectF rect, Matrix matrixMain) {
         bitmapWidth = mBitmap.getWidth();
@@ -160,14 +202,25 @@ public class EditorView extends View {
         } else {
             finalHeight = rect.width() / bmRatio;
         }
-        positionX = (rect.width() - mBitmap.getWidth()) / 2;
-        positionY = (rect.height() - mBitmap.getHeight()) / 2;
+        x = (rect.width() - mBitmap.getWidth()) / 2;
+        y = (rect.height() - mBitmap.getHeight()) / 2;
+
+
+        float[] matValues = new float[9];
+        matrixMain.getValues(matValues);
+
+        float prevTx = matValues[Matrix.MTRANS_X];
+        float prevTy = matValues[Matrix.MTRANS_Y];
+        float[] arrayFt = {prevTx,prevTy};
+
 
         scaleValueX = (finalWidth / mBitmap.getWidth());
         scaleValueY = (finalHeight / mBitmap.getHeight());
         scaleValueFinal = Math.max(scaleValueX, scaleValueY);
-        matrixMain.setTranslate(rect.left + positionX, rect.top + positionY);
-        matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth() / 2, getHeight() / 2);
+
+        matrixMain.setTranslate(rect.left + x, rect.top + y);
+        matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth()/2f, getHeight()/2f);
+
 
     }
 
@@ -179,7 +232,6 @@ public class EditorView extends View {
         float newHeight = height;
 
         if (mRatio >= 1.0f) {
-
             newHeight = newWidth / mRatio;
             if (newHeight > height) {
                 newHeight = height;
@@ -214,5 +266,46 @@ public class EditorView extends View {
         matrix.setScale(scalePosition, scalePosition, getWidth() / 2, getHeight() / 2);
         matrix.preTranslate(rect.left + translateX, rect.top + translatey);
 
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        buttonClicked = false;
+        //mScaleDetector.onTouchEvent(event);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN: {
+
+                x = event.getX();
+                y = event.getY();
+
+            }
+            case MotionEvent.ACTION_MOVE: {
+                // Log.d("TAG", "onTouchEvent: " + "ActionMove");
+                float moveX, moveY;
+                moveX = event.getX();
+                moveY = event.getY();
+
+                matrixMain.postTranslate(moveX - x, moveY - y);
+
+                offsetFromCenterX += moveX - x;
+                offsetFromCenterY += moveY - y;
+
+                x = moveX;
+                y = moveY;
+
+                float[] matValues = new float[9];
+                matrixMain.getValues(matValues);
+
+
+                //  invalidate();
+                // return true;
+            }
+            case MotionEvent.ACTION_UP: {
+                Log.d("TAG", "onTouchEvent: " + "ActionUp");
+                //return true;
+            }
+        }
+        invalidate();
+        return true;
     }
 }
