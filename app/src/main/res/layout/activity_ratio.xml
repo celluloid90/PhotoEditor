@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".editor.activity.UpdateActivity">
-
+    tools:context=".editor.activity.RatioActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -16,8 +15,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.example.photo_editor.editor.view.EditorView
-            android:id="@+id/editorView"
+        <com.example.photo_editor.editor.view.RatioView
+            android:id="@+id/ratioView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/gray"
@@ -80,4 +79,5 @@
             app:layout_constraintStart_toEndOf="@+id/center" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -62,7 +62,15 @@ public class EditorView extends View {
     private final static float mMinZoom = 1.0f;
     private final static float mMaxZoom = 5.0f;
     private boolean buttonClicked;
-    float offsetFromCenterX = 0f, offsetFromCenterY = 0f;
+    //float offsetFromCenterX = 0f, offsetFromCenterY = 0f;
+    RectF bmForGroundRect;
+    float bmLeft;
+    float bmTop;
+    float bmRight;
+    float bmBottom;
+    Paint bmForGroundPaint;
+    float centerX = .5f;
+    float centerY = .5f;
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
@@ -115,17 +123,16 @@ public class EditorView extends View {
         buttonClicked = true;
         mRatio = (float) w / h;
         scaleBackGroundMatrix(rect, matrix);
-        float tx = 12f;
-        float ty = 10f;
-        scaleForGroundImageMatrix(rect, matrixMain);
+
+        scaleForGroundImageMatrix(rect);
         //matrixMain.postTranslate(tx, ty);
         invalidate();
     }
 
     public void checkClickedButtonType(CheckButtonType checkButtonType) {
         this.checkButtonType = checkButtonType;
-        offsetFromCenterY=0f;
-        offsetFromCenterX=0f;
+       // offsetFromCenterY = 0f;
+       // offsetFromCenterX = 0f;
         if (checkButtonType.equals(CheckButtonType.LEFT)) {
             matrixMain.setScale(scaleValueFinal, scaleValueFinal);
             if (rect.width() > finalWidth) {
@@ -178,16 +185,34 @@ public class EditorView extends View {
         super.onDraw(canvas);
 
         canvas.save();
-        canvas.clipRect(rect);
+    //    canvas.clipRect(rect);
         canvas.drawBitmap(mBackGroundBitmap, matrix, null);
-        canvas.drawBitmap(mBitmap, matrixMain, null);
+        // canvas.drawBitmap(mBitmap, matrixMain, null);
+        // drawBitmap(canvas);
+        // canvas.translate(offsetFromCenterX, offsetFromCenterY);
+    //    Log.d("TAG", "onDraw: " + offsetFromCenterX + "y: " + offsetFromCenterY);
+        bmLeft = (getWidth()*centerX- finalWidth / 2);
+        bmTop = (getHeight()*centerY - finalHeight / 2);
+        bmRight = bmLeft+finalWidth;
+        bmBottom = bmTop+finalHeight;
+        bmForGroundRect = new RectF(bmLeft, bmTop, bmRight, bmBottom);
+        canvas.drawBitmap(mBitmap, null, bmForGroundRect, null);
         canvas.restore();
+        Log.d("TAG", "onDraw: " + "onDraw");
 
 
     }
 
+    private void drawBitmap(Canvas canvas) {
+        canvas.save();
 
-    private void scaleForGroundImageMatrix(RectF rect, Matrix matrixMain) {
+
+        //canvas.scale(mScaleFactor, mScaleFactor);
+        canvas.restore();
+    }
+
+
+    private void scaleForGroundImageMatrix(RectF rect) {
         bitmapWidth = mBitmap.getWidth();
         bitmapHeight = mBitmap.getHeight();
 
@@ -202,11 +227,24 @@ public class EditorView extends View {
         } else {
             finalHeight = rect.width() / bmRatio;
         }
-        x = (rect.width() - mBitmap.getWidth()) / 2;
-        y = (rect.height() - mBitmap.getHeight()) / 2;
+        //centerX = getWidth() / 2;
+        // centerY = getHeight() / 2;
+
+     /*   bmLeft = centerX - finalWidth / 2;
+        bmTop = centerY - finalHeight / 2;
+        bmRight = centerX + finalWidth / 2;
+        bmBottom = centerY + finalHeight / 2;*/
+
+        Log.d("TAG", "bmLeft: " + bmLeft + "bmTop: " + bmTop);
 
 
-        float[] matValues = new float[9];
+       /* x = (rect.width() - mBitmap.getWidth()) / 2;
+        y = (rect.height() - mBitmap.getHeight()) / 2;*/
+
+
+
+
+     /*   float[] matValues = new float[9];
         matrixMain.getValues(matValues);
 
         float prevTx = matValues[Matrix.MTRANS_X];
@@ -219,7 +257,7 @@ public class EditorView extends View {
         scaleValueFinal = Math.max(scaleValueX, scaleValueY);
 
         matrixMain.setTranslate(rect.left + x, rect.top + y);
-        matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth()/2f, getHeight()/2f);
+        matrixMain.postScale(scaleValueFinal, scaleValueFinal, getWidth()/2f, getHeight()/2f);*/
 
 
     }
@@ -231,7 +269,7 @@ public class EditorView extends View {
         float newWidth = width;
         float newHeight = height;
 
-        if (mRatio >= 1.0f) {
+        /*if (mRatio >= 1.0f) {
             newHeight = newWidth / mRatio;
             if (newHeight > height) {
                 newHeight = height;
@@ -243,16 +281,17 @@ public class EditorView extends View {
                 newWidth = width;
                 newHeight = width / mRatio;
             }
-        }
+        }*/
 
         float rectW = newWidth;
         float rectH = newHeight;
 
-        rect.top = ((height - rectH) / 2);
+        /*rect.top = ((height - rectH) / 2);
         rect.left = ((width - rectW) / 2);
 
         rect.right = (rect.left + rectW);
-        rect.bottom = (rect.top + rectH);
+        rect.bottom = (rect.top + rectH);*/
+        rect.set(0f, 0f, width, height);
 
         Paint paint = new Paint();
         paint.setColor(Color.TRANSPARENT);
@@ -287,8 +326,11 @@ public class EditorView extends View {
 
                 matrixMain.postTranslate(moveX - x, moveY - y);
 
-                offsetFromCenterX += moveX - x;
-                offsetFromCenterY += moveY - y;
+
+                //offsetFromCenterX += moveX - x;
+                //offsetFromCenterY += moveY - y;
+                centerX += ((moveX-x)/getWidth());
+                centerY += ((moveY-y)/getHeight());
 
                 x = moveX;
                 y = moveY;
@@ -301,7 +343,7 @@ public class EditorView extends View {
                 // return true;
             }
             case MotionEvent.ACTION_UP: {
-                Log.d("TAG", "onTouchEvent: " + "ActionUp");
+
                 //return true;
             }
         }

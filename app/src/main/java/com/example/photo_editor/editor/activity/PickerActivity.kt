@@ -35,7 +35,7 @@ class PickerActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK && requestCode == SELECT_PICTURE) {
             imageUri = data?.data
-            val intent = Intent(this, UpdateActivity::class.java)
+            val intent = Intent(this, RatioActivity::class.java)
             intent.putExtra("imageUri", imageUri.toString())
             startActivity(intent)
         }
