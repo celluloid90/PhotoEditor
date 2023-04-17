@@ -14,6 +14,7 @@ import com.example.photo_editor.databinding.ActivityRatioBinding
 import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.model.RatioModel
+import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
 import java.util.*
 
@@ -21,7 +22,7 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
     private var myUri: Uri? = null
     private lateinit var binding: ActivityRatioBinding
     private var bitmap: Bitmap? = null
-    private val IMAGE_URI:String = "imageUri"
+    private val IMAGE_URI: String = "imageUri"
     lateinit var itemName: ArrayList<String>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +33,10 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         myUri = Uri.parse(extras!!.getString(IMAGE_URI))
         binding.ratioView.setImageUri(myUri);
         bitmap = RoateImage.getRotatedBitmap(this, myUri)
+        binding.left.setOnClickListener(this)
+        binding.right.setOnClickListener(this)
+        binding.center.setOnClickListener(this)
+        binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
 
     }
 
@@ -51,12 +56,13 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
                 )
             )
         }
-        val adapter = this?.let { RatioAdapter(it, ratioModelList, this) }
+        val adapter = this.let { RatioAdapter(it, ratioModelList, this) }
         binding.recyclerView.adapter = adapter
     }
 
     override fun onItemClick(position: Int) {
         if (position == 0) {
+            binding.ratioView.setOriginalRatio();
             setLayoutHeightWidth(bitmap!!.width.toFloat(), bitmap!!.height.toFloat())
         }
         if (position == 1) {
@@ -79,7 +85,6 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         }
         if (position == 7) {
             setLayoutHeightWidth(3f, 2f)
-
         }
         if (position == 8) {
             setLayoutHeightWidth(5f, 4f)
@@ -90,6 +95,13 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
     }
 
     override fun onClick(v: View?) {
+        if (v == binding.left) {
+            binding.ratioView.checkClickedButtonType(CheckButtonType.LEFT)
+        } else if (v == binding.center) {
+            binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
+        } else if (v == binding.right) {
+            binding.ratioView.checkClickedButtonType(CheckButtonType.RIGHT)
+        }
 
     }
 
