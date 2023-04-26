@@ -16,6 +16,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.photo_editor.editor.model.DataModel;
 import com.example.photo_editor.editor.utils.BlurBitmap;
 import com.example.photo_editor.editor.utils.CheckButtonType;
 import com.example.photo_editor.editor.utils.RoateImage;
@@ -40,17 +41,24 @@ public class RatioView extends View {
     private float finalHeight;
     private float x, y;
     float saveScale = 1f;
-    float minScale = 1.0f;
-    float maxScale = 4.0f;
     CheckButtonType checkButtonType;
     private float mScaleFactor = 1.0f;
     private ScaleGestureDetector mScaleDetector;
     float v;
+    boolean buttonClicked = false;
+    boolean touched = false;
+    private DataModel dataModel;
+    boolean centerBool = false;
+    boolean leftBool = false;
+    boolean rightBool = false;
+    boolean leftBoolX = false;
+    boolean leftBoolY = false;
+    boolean rightBoolY = false;
+    boolean rightBoolX = false;
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(@NonNull ScaleGestureDetector detector) {
-            // Log.d("TAG", "onScale: " + detector.getScaleFactor());
             mScaleFactor *= detector.getScaleFactor();
             return true;
         }
@@ -83,10 +91,27 @@ public class RatioView extends View {
         mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
 
         mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+        dataModel = new DataModel();
+    }
+
+    public float getViewHeight() {
+        return getHeight();
+    }
+
+    public float getViewWidth() {
+        return getWidth();
+    }
+
+    public float getFinalWidth() {
+        return finalWidth;
+    }
+
+    public float getFinalHeight() {
+        return finalHeight;
     }
 
     public void setImageUri(Uri uri) {
-        this.uri = uri;
+       // this.uri = uri;
         mBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
         mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
         mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext());
@@ -102,37 +127,59 @@ public class RatioView extends View {
 
     public void checkClickedButtonType(CheckButtonType checkButtonType) {
 
-
-
+        buttonClicked = true;
+        touched = false;
         this.checkButtonType = checkButtonType;
+        // float ratio = dataModel.setViewRatio(this);
+        //centerX = dataModel.setCenterX(this);
+        // centerY = dataModel.setCenterY(this);
         if (checkButtonType.equals(CheckButtonType.CENTER)) {
             centerX = initialScale;
             centerY = initialScale;
-
-        } else if (checkButtonType.equals(CheckButtonType.LEFT)) {
-            if (getWidth() > finalWidth) {
+            centerBool = true;
+            leftBool = false;
+            rightBool = false;
+        }
+        if (checkButtonType.equals(CheckButtonType.LEFT)) {
+            centerBool = false;
+            leftBool = true;
+            rightBool = false;
+            if (getWidth() > getHeight()) {
                 centerX = ((finalWidth / 2) / getWidth());
-                Log.d("TAG", "centerX: "+centerX);
                 centerY = initialScale;
-            } else if (getHeight() > finalHeight) {
+                leftBoolX = true;
+                leftBoolY = false;
+            } else {
                 centerY = ((finalHeight) / 2) / getHeight();
                 centerX = initialScale;
-                Log.d("TAG", "centerY: "+centerY);
-            }
-
-        } else if (checkButtonType.equals(CheckButtonType.RIGHT)) {
-            if (getWidth() > finalWidth) {
-                centerX = (1 - (finalWidth / 2) / getWidth());
-                Log.d("TAG", "centerX: "+centerX);
-                centerY = initialScale;
-            } else if (getHeight() > finalHeight) {
-                centerY = (1 - (finalHeight / 2) / getHeight());
-                centerX = initialScale;
-                Log.d("TAG", "centerY: "+centerY);
+                leftBoolY = true;
+                leftBoolX = false;
             }
         }
+        if (checkButtonType.equals(CheckButtonType.RIGHT)) {
+            centerBool = false;
+            leftBool = false;
+            rightBool = true;
+
+            if (getWidth() > getHeight()) {
+                centerX = (1 - (finalWidth / 2) / getWidth());
+                centerY = initialScale;
+                rightBoolX = true;
+                rightBoolY = false;
+            } else {
+                centerY = (1 - (finalHeight / 2) / getHeight());
+                centerX = initialScale;
+                rightBoolY = true;
+                rightBoolX = false;
+            }
+        }
+
         invalidate();
 
+    }
+
+    public CheckButtonType mCheckButtonType() {
+        return checkButtonType;
     }
 
     private void scaleForegroundImageCanvas() {
@@ -149,17 +196,55 @@ public class RatioView extends View {
         } else {
             finalHeight = finalWidth / bitmapRatio;
         }
-        Log.d("TAG", "scaleForegroundCenterX: " + centerX);
-        Log.d("TAG", "scaleForegroundCenterY: " + centerY);
-        Log.d("TAG", "scaleForegroundfinalWidth: " + finalWidth);
-        Log.d("TAG", "scaleForegroundfinalHeight: " + finalHeight);
+
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        scaleForegroundImageCanvas();
+
+        if (buttonClicked) {
+            if (leftBool) {
+                if (leftBoolY) {
+                    if (h > finalHeight) {
+                        centerY = (finalHeight / 2) / h;
+                    } else {
+                        centerY = initialScale;
+                    }
+                } else if (leftBoolX) {
+                    if (w > finalWidth) {
+                        centerX = (finalWidth / 2) / w;
+                    } else if (h > finalHeight) {
+                        centerX = initialScale;
+                    }
+                }
+            }
+            if (rightBool) {
+                if (rightBoolY) {
+                    if (h > finalHeight) {
+                        centerY = (1 - (finalHeight / 2) / h);
+                    } else {
+                        centerY = initialScale;
+                    }
+                } else if (rightBoolX) {
+                    if (w > finalWidth) {
+                        centerX = (1 - (finalWidth / 2) / w);
+                    } else if (h > finalHeight) {
+                        centerX = initialScale;
+                    }
+
+                }
+            }
+        }
+
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawBackGroundCanvas(canvas);
-        scaleForegroundImageCanvas();
+
         bmLeft = getWidth() * centerX - (finalWidth / 2) * mScaleFactor;
         bmTop = getHeight() * centerY - (finalHeight / 2) * mScaleFactor;
         bmRight = getWidth() * centerX + (finalWidth / 2) * mScaleFactor;
@@ -177,13 +262,15 @@ public class RatioView extends View {
 
         bgMatrix.postTranslate(Math.round(getWidth() - mBackGroundBitmap.getWidth()) * .5f,
                 Math.round(getHeight() - mBackGroundBitmap.getHeight()) * .5f);
-        // canvas.drawBitmap(mBackGroundBitmap, bgMatrix, null);
-        canvas.drawColor(Color.YELLOW);
+        canvas.drawBitmap(mBackGroundBitmap, bgMatrix, null);
+        // canvas.drawColor(Color.YELLOW);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
+        touched = true;
+        buttonClicked = false;
         mScaleDetector.onTouchEvent(event);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {

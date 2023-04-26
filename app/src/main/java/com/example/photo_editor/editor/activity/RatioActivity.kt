@@ -13,6 +13,7 @@ import com.example.photo_editor.R
 import com.example.photo_editor.databinding.ActivityRatioBinding
 import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
+import com.example.photo_editor.editor.model.DataModel
 import com.example.photo_editor.editor.model.RatioModel
 import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
@@ -23,6 +24,7 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
     private lateinit var binding: ActivityRatioBinding
     private var bitmap: Bitmap? = null
     private val IMAGE_URI: String = "imageUri"
+    private var dataModel: DataModel? = null
     lateinit var itemName: ArrayList<String>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +66,7 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         if (position == 0) {
             binding.ratioView.setOriginalRatio();
             setLayoutHeightWidth(bitmap!!.width.toFloat(), bitmap!!.height.toFloat())
+            binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
         }
         if (position == 1) {
             setLayoutHeightWidth(1f, 1f)
