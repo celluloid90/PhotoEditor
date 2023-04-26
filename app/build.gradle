@@ -8,7 +8,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.photo_editor"
+        applicationId "com.example.photo_editor_dev"
         minSdk 24
         targetSdk 33
         versionCode 1

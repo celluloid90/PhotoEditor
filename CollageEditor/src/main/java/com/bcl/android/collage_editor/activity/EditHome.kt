@@ -1,22 +1,33 @@
 package com.bcl.android.collage_editor.activity
 
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bcl.android.collage_editor.R
-import com.bcl.android.collage_editor.customview.CustomView
+import com.bcl.android.collage_editor.customview.CollageTemplateView
+import com.bcl.android.collage_editor.utils.Constants.EXPORT_COLLAGE_TEMPLATE
 import com.bcl.android.collage_editor.utils.Utils
 import com.braincraft.droid.filepicker.utils.Constant
 import com.braincraftapps.mediaFetcher.model.MediaFile
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+
 
 class EditHome : AppCompatActivity(), View.OnClickListener {
     lateinit var close: ImageView
+    lateinit var exportBtn: ImageView
     lateinit var ratio: ImageView
     lateinit var adjust: ImageView
     lateinit var background: ImageView
@@ -29,9 +40,10 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
     lateinit var edgeSmoothBar: SeekBar
     var zoomScaleValue: Float = 1f
     var edgeGapValue: Float = 0.01f
-    private lateinit var customView: CustomView
+    private lateinit var collageTemplateView: CollageTemplateView
     private lateinit var mediaFiles: ArrayList<MediaFile>
     private var uriLists: ArrayList<Uri> = ArrayList()
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +60,7 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
 
         initAllViews()
         initAllListeners()
-        customView.setData(uriLists)
+        collageTemplateView.setData(uriLists)
     }
 
     private fun initAllListeners() {
@@ -59,6 +71,7 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         gallery.setOnClickListener(this)
         adjustContainer.setOnClickListener(this)
         adjustDone.setOnClickListener(this)
+        exportBtn.setOnClickListener(this)
 
         zoomBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -99,17 +112,17 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
 
     private fun updateEdgeSmoothness(progress: Int) {
         var value: Float = (progress * 10).toFloat()
-        customView.updateEdgeSmooth(value)
+        collageTemplateView.updateEdgeSmooth(value)
     }
 
     private fun updateEdgeGap(progress: Int) {
         edgeGapValue = progress / 1000f
-        customView.updateFrameGap(edgeGapValue)
+        collageTemplateView.updateFrameGap(edgeGapValue)
     }
 
     private fun updateScaleValue(progress: Int) {
         zoomScaleValue = (100f - progress) / 100f
-        customView.updateZoomScale(zoomScaleValue)
+        collageTemplateView.updateZoomScale(zoomScaleValue)
     }
 
     private fun initAllViews() {
@@ -123,7 +136,9 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         zoomBar = findViewById(R.id.zoom_seekbar)
         edgeGapBar = findViewById(R.id.edge_seekbar)
         edgeSmoothBar = findViewById(R.id.corner_seekbar)
-        customView = findViewById(R.id.img_background)
+        collageTemplateView = findViewById(R.id.img_background)
+        exportBtn = findViewById(R.id.btn_next)
+        progressBar = findViewById(R.id.progress_bar)
     }
 
     override fun onClick(v: View?) {
@@ -150,7 +165,39 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
                 isAdjustViewOpen = false
                 Utils.viewSlideDown(adjustContainer)
             }
+            exportBtn -> {
+                if (isAdjustViewOpen) {
+                    isAdjustViewOpen = false
+                    Utils.viewSlideDown(adjustContainer)
+                }
+                progressBar.visibility = View.VISIBLE
+                createOutputImage()
+            }
         }
+    }
+
+    private fun createOutputImage() {
+        var outStream: FileOutputStream? = null
+        try {
+            val bitmap = viewToBitmap(collageTemplateView)
+            outStream = FileOutputStream(File(cacheDir, EXPORT_COLLAGE_TEMPLATE))
+            bitmap?.compress(Bitmap.CompressFormat.JPEG, 75, outStream)
+            outStream.close()
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        startActivity(Intent(this, AfterCollageActivity::class.java))
+        progressBar.visibility = View.INVISIBLE
+    }
+
+    private fun viewToBitmap(view: View): Bitmap? {
+        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        return bitmap
     }
 
     private fun openAdjustView() {

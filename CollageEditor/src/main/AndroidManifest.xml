@@ -11,6 +11,13 @@
 
     <application android:requestLegacyExternalStorage="true">
         <activity
+            android:name=".activity.AfterCollageActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".activity.EditHome"
             android:exported="false">
             <meta-data

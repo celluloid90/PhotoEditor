@@ -53,16 +53,22 @@
         android:layout_marginTop="50dp"
         android:layout_marginBottom="50dp"
         android:layout_weight="1"
-        android:background="@color/white"
         android:gravity="center">
 
-        <com.bcl.android.collage_editor.customview.CustomView
+        <com.bcl.android.collage_editor.customview.CollageTemplateView
             android:id="@+id/img_background"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
             android:adjustViewBounds="true"
             android:orientation="horizontal" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:visibility="invisible"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
     </RelativeLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -183,8 +189,8 @@
                 android:id="@+id/edge_seekbar"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:progress="10"
                 android:max="70"
+                android:progress="10"
                 app:layout_constraintBottom_toBottomOf="@id/edge_text"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/edge_text"

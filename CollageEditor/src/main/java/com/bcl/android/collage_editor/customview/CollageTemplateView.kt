@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
@@ -17,7 +16,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
 import com.bcl.android.collage_editor.utils.ImageUtils
 import kotlin.math.atan2
-import kotlin.math.max
 
 
 /**
@@ -25,7 +23,7 @@ import kotlin.math.max
 
  * Copyright (c) 2023 Brain Craft LTD.
  **/
-class CustomView @JvmOverloads constructor(
+class CollageTemplateView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ImageView(context, attrs, defStyleAttr) {
 
@@ -54,6 +52,9 @@ class CustomView @JvmOverloads constructor(
     private var currentAngle: Float = 0f
 
     init {
+        scaleType = ScaleType.MATRIX
+        setBackgroundColor(Color.WHITE)
+
         path1 = Path()
         path2 = Path()
 
@@ -65,8 +66,6 @@ class CustomView @JvmOverloads constructor(
 
         paint2 = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         paint2.style = Paint.Style.FILL
-
-        scaleType = ScaleType.MATRIX
 
         corEffect = CornerPathEffect(0.0f)
         paint1.pathEffect = corEffect
@@ -96,7 +95,7 @@ class CustomView @JvmOverloads constructor(
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
                     val factor = detector.scaleFactor
                     matrixList[i].postScale(factor, factor, width / 2f, height / 2f)
-                    ViewCompat.postInvalidateOnAnimation(this@CustomView)
+                    ViewCompat.postInvalidateOnAnimation(this@CollageTemplateView)
 
                     return true
                 }
@@ -108,7 +107,7 @@ class CustomView @JvmOverloads constructor(
                         e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float
                     ): Boolean {
                         matrixList[i].postTranslate(-distanceX, -distanceY)
-                        ViewCompat.postInvalidateOnAnimation(this@CustomView)
+                        ViewCompat.postInvalidateOnAnimation(this@CollageTemplateView)
                         return true
                     }
                 })
@@ -175,15 +174,12 @@ class CustomView @JvmOverloads constructor(
             )
             regionList.add(region)
 
-            val scale: Float = max(w / (width / 2f), h / (height / 2f))
             mMatrix = Matrix()
             mMatrix.set(
                 ImageUtils.createMatrixToDrawImageInCenterView(
                     region, bitmapLists[i].width.toFloat(), bitmapLists[i].height.toFloat()
                 )
             )
-//            mMatrix.setScale(scale, scale)
-//            mMatrix.postTranslate((w - scale * (width / 2f)) / 2f, (h - scale * (height / 2f)) / 2f)
             matrixList.add(mMatrix)
         }
     }
@@ -205,9 +201,6 @@ class CustomView @JvmOverloads constructor(
             canvas?.save()
         }
 
-//        canvas?.clipPath(path2)
-//        canvas?.drawBitmap(bitmapLists[1], Matrix(), paint2)
-
         canvas?.restore()
     }
 
@@ -218,7 +211,6 @@ class CustomView @JvmOverloads constructor(
 
         if (event.pointerCount == 2) {
             currentAngle = getAngle(event)
-            Log.d("TAG", "onTouchEvent: getAngle: $currentAngle $prevAngle")
         }
 
         when (event.action and MotionEvent.ACTION_MASK) {
@@ -231,7 +223,6 @@ class CustomView @JvmOverloads constructor(
                 }
                 if (event.pointerCount == 2) {
                     prevAngle = currentAngle
-                    Log.d("TAG", "onTouchEvent: assign to prev (down): $currentAngle $prevAngle")
                 }
             }
 
@@ -244,16 +235,12 @@ class CustomView @JvmOverloads constructor(
                                 event.getX(1).toInt(), event.getY(1).toInt()
                             )
                         ) {
-//                            currentAngle = getAngle(event)
-
                             val pivotX =
                                 regionList[i].bounds.left + (regionList[i].bounds.width() / 2f)
                             val pivotY =
                                 regionList[i].bounds.top + (regionList[i].bounds.height() / 2f)
-                            Log.d("TAG", "onTouchEvent: $currentAngle $prevAngle")
                             matrixList[i].postRotate(currentAngle - prevAngle, pivotX, pivotY)
                             prevAngle = currentAngle
-                            Log.d("TAG", "onTouchEvent: assign to prev (move): $currentAngle $prevAngle")
                         }
                     }
                 }
@@ -261,7 +248,6 @@ class CustomView @JvmOverloads constructor(
 
             MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_POINTER_DOWN -> {
                 prevAngle = currentAngle
-                Log.d("TAG", "onTouchEvent: assign to prev (pointer): $currentAngle $prevAngle")
             }
 
             MotionEvent.ACTION_UP -> {
@@ -298,7 +284,9 @@ class CustomView @JvmOverloads constructor(
         this.uriLists.addAll(uriLists)
 
         for (uri in this.uriLists) {
-            var bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            /*var bitmap = ImageUtils.getResizedBitmap(context, uri, 512, 512)
+            bitmapLists.add(bitmap!!)*/
+            val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             bitmapLists.add(ImageUtils.rotateImageIfRequired(context, bitmap, uri)!!)
         }
         invalidate()
