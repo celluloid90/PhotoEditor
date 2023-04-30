@@ -50,6 +50,8 @@ class CollageTemplateView @JvmOverloads constructor(
     private var pathLists: ArrayList<Path> = ArrayList()
     private var prevAngle: Float = 0f
     private var currentAngle: Float = 0f
+    private var pinchFactor: Float = 0.0f
+    private var doubleTapCount: Int = 0
 
     init {
         scaleType = ScaleType.MATRIX
@@ -93,8 +95,8 @@ class CollageTemplateView @JvmOverloads constructor(
         for (i in pathLists.indices) {
             val sDetector = ScaleGestureDetector(context, object : SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val factor = detector.scaleFactor
-                    matrixList[i].postScale(factor, factor, width / 2f, height / 2f)
+                    pinchFactor = detector.scaleFactor
+                    matrixList[i].postScale(pinchFactor, pinchFactor, width / 2f, height / 2f)
                     ViewCompat.postInvalidateOnAnimation(this@CollageTemplateView)
 
                     return true
@@ -109,6 +111,25 @@ class CollageTemplateView @JvmOverloads constructor(
                         matrixList[i].postTranslate(-distanceX, -distanceY)
                         ViewCompat.postInvalidateOnAnimation(this@CollageTemplateView)
                         return true
+                    }
+
+                    override fun onDoubleTap(e: MotionEvent): Boolean {
+                        doubleTapCount++
+                        if (doubleTapCount % 2 != 0) {
+                            matrixList[i].postScale(2f, 2f, e.x, e.y)
+                        } else {
+                            val matrix = Matrix()
+                            matrix.set(
+                                ImageUtils.createMatrixToDrawImageInCenterView(
+                                    regionList[i],
+                                    bitmapLists[i].width.toFloat(),
+                                    bitmapLists[i].height.toFloat()
+                                )
+                            )
+                            matrixList[i].set(matrix)
+                        }
+                        invalidate()
+                        return super.onDoubleTap(e)
                     }
                 })
 
