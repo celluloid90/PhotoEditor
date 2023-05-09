@@ -1,9 +1,11 @@
 package com.example.photo_editor.editor.activity
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +17,7 @@ import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.model.DataModel
 import com.example.photo_editor.editor.model.RatioModel
+import com.example.photo_editor.editor.utils.BackgroundType
 import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
 import java.util.*
@@ -25,6 +28,8 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
     private var bitmap: Bitmap? = null
     private val IMAGE_URI: String = "imageUri"
     private var dataModel: DataModel? = null
+    var SELECT_PICTURE = 200
+    private var imageUri: Uri? = null
     lateinit var itemName: ArrayList<String>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,11 +40,24 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         myUri = Uri.parse(extras!!.getString(IMAGE_URI))
         binding.ratioView.setImageUri(myUri);
         bitmap = RoateImage.getRotatedBitmap(this, myUri)
+        initClickListener()
+
+        binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
+        binding.ratioView.setBackBround(BackgroundType.BLUR)
+
+    }
+
+    private fun initClickListener() {
+
         binding.left.setOnClickListener(this)
         binding.right.setOnClickListener(this)
         binding.center.setOnClickListener(this)
-        binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
-
+        binding.white.setOnClickListener(this)
+        binding.black.setOnClickListener(this)
+        binding.blur.setOnClickListener(this)
+        binding.gallery.setOnClickListener(this)
+        binding.gradient.setOnClickListener(this)
+        binding.color.setOnClickListener(this)
     }
 
     private fun recyclerviewInitiate() {
@@ -104,8 +122,26 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
             binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
         } else if (v == binding.right) {
             binding.ratioView.checkClickedButtonType(CheckButtonType.RIGHT)
-        }
+        } else if (v == binding.white) {
+            binding.ratioView.setBackBround(BackgroundType.WHITE)
+            Toast.makeText(this, "white", Toast.LENGTH_SHORT).show()
 
+        } else if (v == binding.black) {
+            binding.ratioView.setBackBround(BackgroundType.BLACK)
+        } else if (v == binding.blur) {
+            binding.ratioView.setBackBround(BackgroundType.BLUR)
+        } else if (v == binding.gallery) {
+            binding.ratioView.setBackBround(BackgroundType.PHOTO)
+            val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
+            startActivityForResult(gallery, SELECT_PICTURE)
+        } else if (v == binding.gradient) {
+            binding.ratioView.setBackBround(BackgroundType.GRADIENT)
+
+        } else if (v == binding.color) {
+            binding.colorView.visibility = View.VISIBLE
+            binding.backgroundView.visibility = View.INVISIBLE
+            binding.recyclerView.visibility = View.INVISIBLE
+        }
     }
 
     private fun setLayoutHeightWidth(fl: Float, fl1: Float) {
@@ -134,5 +170,13 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         binding.ratioView.layoutParams = params
 
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK && requestCode == SELECT_PICTURE) {
+            imageUri = data?.data
+            binding.ratioView.setgellaryUri(imageUri)
+        }
     }
 }

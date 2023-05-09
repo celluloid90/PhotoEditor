@@ -4,12 +4,17 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.PixelCopy;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
@@ -17,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.photo_editor.editor.model.DataModel;
+import com.example.photo_editor.editor.utils.BackgroundType;
 import com.example.photo_editor.editor.utils.BlurBitmap;
 import com.example.photo_editor.editor.utils.CheckButtonType;
 import com.example.photo_editor.editor.utils.RoateImage;
@@ -26,6 +32,7 @@ public class RatioView extends View {
     private Uri uri;
     private Bitmap mBitmap;
     private Bitmap mBackGroundBitmap;
+    private Bitmap mGalleryBackgroundBm;
     private Matrix bgMatrix;
     private Matrix matrixMain;
     private float mRatio;
@@ -44,7 +51,6 @@ public class RatioView extends View {
     CheckButtonType checkButtonType;
     private float mScaleFactor = 1.0f;
     private ScaleGestureDetector mScaleDetector;
-    float v;
     boolean buttonClicked = false;
     boolean touched = false;
     private DataModel dataModel;
@@ -55,11 +61,22 @@ public class RatioView extends View {
     boolean leftBoolY = false;
     boolean rightBoolY = false;
     boolean rightBoolX = false;
+    boolean isDoubleTouched = false;
+    private static final int LINE_SPACING = 20;
+    private Paint paint, paintEgds;
+    float rotation;
+    double degree;
+    private int mLastAngle = 0;
+    float moveX, moveY;
+    double rotaionNew;
+    BackgroundType backgroundType;
+    boolean edges = false;
+
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(@NonNull ScaleGestureDetector detector) {
-            mScaleFactor *= detector.getScaleFactor();
+            // mScaleFactor *= detector.getScaleFactor();
             return true;
         }
     }
@@ -92,6 +109,8 @@ public class RatioView extends View {
 
         mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
         dataModel = new DataModel();
+        paint = new Paint();
+        paintEgds = new Paint();
     }
 
     public float getViewHeight() {
@@ -111,7 +130,7 @@ public class RatioView extends View {
     }
 
     public void setImageUri(Uri uri) {
-       // this.uri = uri;
+        // this.uri = uri;
         mBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
         mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
         mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext());
@@ -124,6 +143,14 @@ public class RatioView extends View {
         mScaleFactor = saveScale;
     }
 
+    public void setBackBround(BackgroundType backgroundType) {
+        this.backgroundType = backgroundType;
+    }
+
+    public void setgellaryUri(Uri uri) {
+        mGalleryBackgroundBm = RoateImage.getRotatedBitmap(getContext(), uri);
+        invalidate();
+    }
 
     public void checkClickedButtonType(CheckButtonType checkButtonType) {
 
@@ -203,7 +230,6 @@ public class RatioView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         scaleForegroundImageCanvas();
-
         if (buttonClicked) {
             if (leftBool) {
                 if (leftBoolY) {
@@ -240,53 +266,117 @@ public class RatioView extends View {
 
     }
 
+    float temp = 0f;
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        drawBackGroundCanvas(canvas);
 
+        // BackgroundView.createBackground(canvas, mBackGroundBitmap, bgMatrix);
+        drawCanvasBackground(canvas);
         bmLeft = getWidth() * centerX - (finalWidth / 2) * mScaleFactor;
         bmTop = getHeight() * centerY - (finalHeight / 2) * mScaleFactor;
         bmRight = getWidth() * centerX + (finalWidth / 2) * mScaleFactor;
         bmBottom = getHeight() * centerY + (finalHeight / 2) * mScaleFactor;
         rectF = new RectF(bmLeft, bmTop, bmRight, bmBottom);
+        canvas.save();
+        temp += rotaionNew;
+
+        canvas.rotate((float) rotaionNew, rectF.centerX(), rectF.centerY());
+        Log.d("TAG", "doRotationEvent: " + rotaionNew);
         canvas.drawBitmap(mBitmap, null, rectF, null);
+        canvas.restore();
+        drawEdgs(canvas);
+        //drawLines(canvas);
     }
 
-    private void drawBackGroundCanvas(Canvas canvas) {
-        float scalemWidth = (float) getWidth() / mBackGroundBitmap.getWidth();
-        float scalemHeight = (float) getHeight() / mBackGroundBitmap.getHeight();
-        float maxScale = Math.max(scalemWidth, scalemHeight);
-        canvas.drawColor(Color.GREEN);
-        bgMatrix.setScale(maxScale, maxScale, mBackGroundBitmap.getWidth() / 2, mBackGroundBitmap.getHeight() / 2);
+    private void drawEdgs(Canvas canvas) {
+        paintEgds.setColor(Color.WHITE);
+        paintEgds.setStyle(Paint.Style.STROKE);
+        paintEgds.setStrokeWidth(2f);
 
-        bgMatrix.postTranslate(Math.round(getWidth() - mBackGroundBitmap.getWidth()) * .5f,
-                Math.round(getHeight() - mBackGroundBitmap.getHeight()) * .5f);
-        canvas.drawBitmap(mBackGroundBitmap, bgMatrix, null);
-        // canvas.drawColor(Color.YELLOW);
+
+        canvas.drawLine(getWidth() / 2, 0, getWidth() / 2, getHeight() / 7, paintEgds);
+        canvas.drawLine(getWidth() / 2, getHeight() - getHeight() / 7, getWidth() / 2, getHeight(), paintEgds);
+
+        canvas.drawLine(0, getHeight() / 2, getWidth() / 7, getHeight() / 2, paintEgds);
+        canvas.drawLine(getWidth(), getHeight() / 2, getWidth() - getWidth() / 7, getHeight() / 2, paintEgds);
+
+
+    }
+
+    private void drawCanvasBackground(Canvas canvas) {
+        if (backgroundType == BackgroundType.WHITE) {
+            canvas.drawColor(Color.WHITE);
+        } else if (backgroundType == BackgroundType.BLACK) {
+            canvas.drawColor(Color.BLACK);
+        } else if (backgroundType == BackgroundType.BLUR) {
+            BackgroundView.createBackground(canvas, mBackGroundBitmap, bgMatrix);
+        } else if (backgroundType == BackgroundType.PHOTO) {
+            if (mGalleryBackgroundBm != null) {
+                BackgroundView.createBackground(canvas, mGalleryBackgroundBm, bgMatrix);
+            }
+        } else if (backgroundType == BackgroundType.GRADIENT) {
+            int color = mBitmap.getPixel(mBitmap.getWidth() / 2, mBitmap.getHeight() / 2);
+            int color2 = mBitmap.getPixel(0, 0);
+            int r = Color.red(color);
+            int g = Color.green(color);
+            int b = Color.blue(color);
+            int r1 = Color.red(color2);
+            int g1 = Color.green(color2);
+            int b1 = Color.blue(color2);
+
+            Paint m_Paint = new Paint();
+            m_Paint.setShader(new LinearGradient(0, 0, getWidth(), getHeight(), Color.rgb(r, g, b), Color.rgb(r1, g1, b1), Shader.TileMode.REPEAT));
+            canvas.drawPaint(m_Paint);
+        }
+        invalidate();
+    }
+
+    private void drawLines(Canvas canvas) {
+        paint.setColor(Color.WHITE);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(2f);
+        paint.setPathEffect(new DashPathEffect(new float[]{10f, 5f}, 0f));
+        if (isDoubleTouched) {
+            canvas.drawLine((rectF.left + rectF.right) / 2, rectF.top - 50,
+                    (rectF.left + rectF.right) / 2, rectF.bottom + 50, paint);
+            canvas.drawLine(rectF.left, (rectF.top + rectF.bottom) / 2,
+                    rectF.right, (rectF.top + rectF.bottom) / 2, paint);
+
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
         touched = true;
         buttonClicked = false;
         mScaleDetector.onTouchEvent(event);
+
+        if (event.getPointerCount() > 1) {
+            isDoubleTouched = true;
+            doRotationEvent(event);
+        } else {
+            isDoubleTouched = false;
+        }
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
                 x = event.getX();
                 y = event.getY();
+
             }
             case MotionEvent.ACTION_MOVE: {
-                float moveX, moveY;
+
+
                 moveX = event.getX();
                 moveY = event.getY();
-                matrixMain.postTranslate(moveX - x, moveY - y);
+
                 centerX += ((moveX - x) / getWidth());
                 centerY += ((moveY - y) / getHeight());
                 x = moveX;
                 y = moveY;
-                v = (float) Math.toDegrees(Math.atan2(centerY - y, centerX - x));
+
 
             }
             case MotionEvent.ACTION_UP: {
@@ -294,6 +384,81 @@ public class RatioView extends View {
             }
         }
         invalidate();
+        return true;
+
+    }
+
+    private boolean doRotationEvent(MotionEvent event) {
+        //Calculate the angle between the two fingers
+        float deltaX = event.getX(0) - event.getX(1);
+        float deltaY = event.getY(0) - event.getY(1);
+        double radians = Math.atan(deltaY / deltaX);
+        //Convert to degrees
+        int degrees = (int) (radians * 180 / Math.PI);
+
+
+        float pointAx = event.getX(0);
+        float pointAy = event.getX(1);
+        float pointBx = event.getY(0);
+        float pointBy = event.getY(1);
+        float pointCx;
+        float pointCy;
+        float pointDx;
+        float pointDy;
+        double angle1;
+        double angle2;
+
+        /*
+         * Must use getActionMasked() for switching to pick up pointer events.
+         * These events have the pointer index encoded in them so the return
+         * from getAction() won't match the exact action constant.
+         */
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_POINTER_UP:
+                //Mark the initial angle
+                mLastAngle = degrees;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                // ATAN returns a converted value between -90deg and +90deg
+                // which creates a point when two fingers are vertical where the
+                // angle flips sign.  We handle this case by rotating a small amount
+                // (5 degrees) in the direction we were traveling
+                /*if ((degrees - mLastAngle) > 45) {
+                    //Going CCW across the boundary
+                    rotation = -5;
+                    Log.d("TAG", ">45: "+rotation);
+                    //mImageMatrix.postRotate(-5, mPivotX, mPivotY);
+                } else if ((degrees - mLastAngle) < -45) {
+                    //Going CW across the boundary
+                    // mImageMatrix.postRotate(5, mPivotX, mPivotY);
+                    rotation = 5;
+                    Log.d("TAG", "<-45: "+rotation);
+                } else {*/
+                //Normal rotation, rotate the difference
+                //mImageMatrix.postRotate(degrees - mLastAngle, mPivotX, mPivotY);
+
+                pointCx = event.getX(0);
+                pointDx = event.getX(1);
+                pointCy = event.getY(0);
+                pointDy = event.getY(1);
+                angle1 = Math.atan2((pointAy - pointBy), (pointAx - pointBx));
+                angle2 = Math.atan2((pointCy - pointDy), (pointCx - pointDx));
+                rotaionNew = -((angle1 - angle2) * (180F / Math.PI));
+
+                rotation = (float) (degrees - mLastAngle);
+
+
+                //   }
+                //Post the rotation to the image
+                // setImageMatrix(mImageMatrix);
+                //Save the current angle
+                mLastAngle = degrees;
+
+                break;
+        }
+
         return true;
     }
 }

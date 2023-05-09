@@ -21,10 +21,6 @@ class PickerActivity : AppCompatActivity() {
 
         binding = ActivityPickerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        /*binding.changeColor.setOnClickListener {
-            binding.customView.swapColor()
-            Toast.makeText(this, "Hello", Toast.LENGTH_SHORT).show()
-        }*/
 
         binding.buttonLoadPicture.setOnClickListener {
             val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
