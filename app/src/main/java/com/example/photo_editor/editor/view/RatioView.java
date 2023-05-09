@@ -29,6 +29,10 @@ import com.example.photo_editor.editor.utils.RoateImage;
 
 public class RatioView extends View {
 
+    float pointAx;
+    float pointAy;
+    float pointBx;
+    float pointBy;
     private Uri uri;
     private Bitmap mBitmap;
     private Bitmap mBackGroundBitmap;
@@ -66,7 +70,7 @@ public class RatioView extends View {
     private Paint paint, paintEgds;
     float rotation;
     double degree;
-    private int mLastAngle = 0;
+    private double mLastAngle = 0;
     float moveX, moveY;
     double rotaionNew;
     BackgroundType backgroundType;
@@ -76,7 +80,7 @@ public class RatioView extends View {
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(@NonNull ScaleGestureDetector detector) {
-            // mScaleFactor *= detector.getScaleFactor();
+             mScaleFactor *= detector.getScaleFactor();
             return true;
         }
     }
@@ -280,14 +284,11 @@ public class RatioView extends View {
         bmBottom = getHeight() * centerY + (finalHeight / 2) * mScaleFactor;
         rectF = new RectF(bmLeft, bmTop, bmRight, bmBottom);
         canvas.save();
-        temp += rotaionNew;
-
         canvas.rotate((float) rotaionNew, rectF.centerX(), rectF.centerY());
-        Log.d("TAG", "doRotationEvent: " + rotaionNew);
         canvas.drawBitmap(mBitmap, null, rectF, null);
         canvas.restore();
-        drawEdgs(canvas);
-        //drawLines(canvas);
+        // drawEdgs(canvas);
+        drawLines(canvas);
     }
 
     private void drawEdgs(Canvas canvas) {
@@ -353,6 +354,20 @@ public class RatioView extends View {
         buttonClicked = false;
         mScaleDetector.onTouchEvent(event);
 
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                if (event.getPointerCount() > 1) {
+                    pointAx = event.getX(0);
+                    pointAy = event.getY(0);
+                    pointBx = event.getX(1);
+                    pointBy = event.getY(1);
+                }
+            }
+            case MotionEvent.ACTION_UP: {
+                mLastAngle = rotaionNew;
+            }
+        }
+
         if (event.getPointerCount() > 1) {
             isDoubleTouched = true;
             doRotationEvent(event);
@@ -397,10 +412,6 @@ public class RatioView extends View {
         int degrees = (int) (radians * 180 / Math.PI);
 
 
-        float pointAx = event.getX(0);
-        float pointAy = event.getX(1);
-        float pointBx = event.getY(0);
-        float pointBy = event.getY(1);
         float pointCx;
         float pointCy;
         float pointDx;
@@ -415,29 +426,14 @@ public class RatioView extends View {
          */
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+
             case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_POINTER_UP:
                 //Mark the initial angle
-                mLastAngle = degrees;
+
                 break;
             case MotionEvent.ACTION_MOVE:
-                // ATAN returns a converted value between -90deg and +90deg
-                // which creates a point when two fingers are vertical where the
-                // angle flips sign.  We handle this case by rotating a small amount
-                // (5 degrees) in the direction we were traveling
-                /*if ((degrees - mLastAngle) > 45) {
-                    //Going CCW across the boundary
-                    rotation = -5;
-                    Log.d("TAG", ">45: "+rotation);
-                    //mImageMatrix.postRotate(-5, mPivotX, mPivotY);
-                } else if ((degrees - mLastAngle) < -45) {
-                    //Going CW across the boundary
-                    // mImageMatrix.postRotate(5, mPivotX, mPivotY);
-                    rotation = 5;
-                    Log.d("TAG", "<-45: "+rotation);
-                } else {*/
-                //Normal rotation, rotate the difference
-                //mImageMatrix.postRotate(degrees - mLastAngle, mPivotX, mPivotY);
+
 
                 pointCx = event.getX(0);
                 pointDx = event.getX(1);
@@ -447,14 +443,15 @@ public class RatioView extends View {
                 angle2 = Math.atan2((pointCy - pointDy), (pointCx - pointDx));
                 rotaionNew = -((angle1 - angle2) * (180F / Math.PI));
 
-                rotation = (float) (degrees - mLastAngle);
+                rotaionNew += mLastAngle;
+
+                rotaionNew = rotaionNew % 360;
+                Log.d("TAG", "doRotationEvent: " + rotaionNew);
 
 
-                //   }
-                //Post the rotation to the image
-                // setImageMatrix(mImageMatrix);
-                //Save the current angle
-                mLastAngle = degrees;
+                //rotation = (float) (degrees - mLastAngle);
+
+                // mLastAngle = degrees;
 
                 break;
         }
