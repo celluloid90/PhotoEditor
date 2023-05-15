@@ -10,19 +10,27 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
 import com.example.photo_editor.databinding.ActivityRatioBinding
 import com.example.photo_editor.databinding.ActivityUpdateBinding
+import com.example.photo_editor.editor.adapter.ColorAdapter
 import com.example.photo_editor.editor.adapter.RatioAdapter
+import com.example.photo_editor.editor.enums.BorderType
+import com.example.photo_editor.editor.enums.FLIPTYPE
+import com.example.photo_editor.editor.model.ColorModel
 import com.example.photo_editor.editor.model.DataModel
 import com.example.photo_editor.editor.model.RatioModel
 import com.example.photo_editor.editor.utils.BackgroundType
 import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
 import java.util.*
+import kotlin.collections.ArrayList
 
-class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, View.OnClickListener {
+class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, View.OnClickListener,
+    ColorAdapter.OnColorItemClickListener {
+    var count = 1;
     private var myUri: Uri? = null
     private lateinit var binding: ActivityRatioBinding
     private var bitmap: Bitmap? = null
@@ -31,11 +39,13 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
     var SELECT_PICTURE = 200
     private var imageUri: Uri? = null
     lateinit var itemName: ArrayList<String>
+    lateinit var itemColor: ArrayList<String>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRatioBinding.inflate(layoutInflater)
         setContentView(binding.root)
         recyclerviewInitiate()
+        colorRecyclerviewInit()
         val extras = intent.extras
         myUri = Uri.parse(extras!!.getString(IMAGE_URI))
         binding.ratioView.setImageUri(myUri);
@@ -44,6 +54,7 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
 
         binding.ratioView.checkClickedButtonType(CheckButtonType.CENTER)
         binding.ratioView.setBackBround(BackgroundType.BLUR)
+        binding.ratioView.setBorder(BorderType.NONE);
 
     }
 
@@ -58,6 +69,12 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         binding.gallery.setOnClickListener(this)
         binding.gradient.setOnClickListener(this)
         binding.color.setOnClickListener(this)
+        binding.crop.setOnClickListener(this)
+        binding.ratio.setOnClickListener(this)
+        binding.border.setOnClickListener(this)
+        binding.rotate.setOnClickListener(this)
+        binding.verticalFlip.setOnClickListener(this)
+        binding.horizontalFlip.setOnClickListener(this)
     }
 
     private fun recyclerviewInitiate() {
@@ -78,6 +95,24 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         }
         val adapter = this.let { RatioAdapter(it, ratioModelList, this) }
         binding.recyclerView.adapter = adapter
+    }
+
+    private fun colorRecyclerviewInit() {
+        itemColor = ArrayList<String>(Arrays.asList(*resources.getStringArray(R.array.color_name)))
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        binding.colorRecyclerView.layoutManager = layoutManager
+
+        val colorModelList = ArrayList<ColorModel>()
+        for (i in 0 until itemColor.size) {
+            colorModelList.add(
+                ColorModel(
+                    itemColor[i]
+                )
+            )
+        }
+        val adapter = this.let { ColorAdapter(it, colorModelList, this) }
+        binding.colorRecyclerView.adapter = adapter
     }
 
     override fun onItemClick(position: Int) {
@@ -124,8 +159,6 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
             binding.ratioView.checkClickedButtonType(CheckButtonType.RIGHT)
         } else if (v == binding.white) {
             binding.ratioView.setBackBround(BackgroundType.WHITE)
-            Toast.makeText(this, "white", Toast.LENGTH_SHORT).show()
-
         } else if (v == binding.black) {
             binding.ratioView.setBackBround(BackgroundType.BLACK)
         } else if (v == binding.blur) {
@@ -141,6 +174,33 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
             binding.colorView.visibility = View.VISIBLE
             binding.backgroundView.visibility = View.INVISIBLE
             binding.recyclerView.visibility = View.INVISIBLE
+        } else if (v == binding.crop) {
+
+        } else if (v == binding.ratio) {
+
+        } else if (v == binding.border) {
+
+            if (count == 0) {
+                binding.ratioView.setBorder(BorderType.NONE);
+                count = 1;
+            } else if (count == 1) {
+                binding.ratioView.setBorder(BorderType.WHITE);
+                count = 2;
+            } else if (count == 2) {
+                binding.ratioView.setBorder(BorderType.BLACK);
+                count = 3;
+            } else if (count == 3) {
+                binding.ratioView.setBorder(BorderType.COLOR);
+                count = 0
+            }
+        } else if (v == binding.rotate) {
+            binding.ratioView.setRotation()
+        } else if (v == binding.verticalFlip) {
+            binding.ratioView.setFlipType(FLIPTYPE.VERTICAL_FLIP)
+
+        } else if (v == binding.horizontalFlip) {
+            binding.ratioView.setFlipType(FLIPTYPE.HORIZONTAL_FLIP)
+
         }
     }
 
@@ -177,6 +237,16 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         if (resultCode == RESULT_OK && requestCode == SELECT_PICTURE) {
             imageUri = data?.data
             binding.ratioView.setgellaryUri(imageUri)
+        }
+    }
+
+    override fun onColorItemClick(position: Int) {
+
+        if (position == 0) {
+            binding.ratioView.setBackBround(BackgroundType.DROPPER)
+        } else {
+            binding.ratioView.setBackBround(BackgroundType.COLOR)
+            binding.ratioView.setColor(itemColor[position].toString())
         }
     }
 }

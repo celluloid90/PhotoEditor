@@ -7,9 +7,9 @@
     tools:context=".editor.activity.RatioActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/rootView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:id="@+id/rootView"
         android:background="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/recyclerView"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,69 +25,114 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <LinearLayout
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="60dp"
+        android:background="@android:color/transparent"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="@id/rootView"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/left"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/circle_view"
+            android:src="@drawable/arrow_left" />
+
+        <ImageView
+            android:id="@+id/center"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/circle_view"
+            android:src="@drawable/zoom_in" />
+
+        <ImageView
+            android:id="@+id/right"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/circle_view"
+            android:src="@drawable/arrow_right" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/backgroundView"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:orientation="horizontal"
         android:background="@color/gray"
-        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/recyclerView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rootView"
-        app:layout_constraintBottom_toTopOf="@+id/recyclerView">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rootView">
 
         <View
             android:id="@+id/white"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_margin="5dp"
-            android:background="@color/white"/>
+            android:layout_weight="1"
+            android:background="@color/white" />
+
         <View
             android:id="@+id/black"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_margin="5dp"
-            android:background="@color/black"/>
+            android:layout_weight="1"
+            android:background="@color/black" />
+
         <TextView
             android:id="@+id/blur"
             android:layout_width="0dp"
-            android:text="Blur"
-            android:gravity="center"
-            android:background="#FFEB3B"
             android:layout_height="match_parent"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:layout_margin="5dp"/>
+            android:background="#FFEB3B"
+            android:gravity="center"
+            android:text="Blur" />
+
         <TextView
             android:id="@+id/gallery"
             android:layout_width="0dp"
-            android:text="Gallery"
-            android:gravity="center"
-            android:background="#FFEB3B"
             android:layout_height="match_parent"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:layout_margin="5dp"/>
+            android:background="#FFEB3B"
+            android:gravity="center"
+            android:text="Gallery" />
+
         <TextView
             android:id="@+id/gradient"
             android:layout_width="0dp"
-            android:text="Gradient"
-            android:gravity="center"
-            android:background="#FFEB3B"
             android:layout_height="match_parent"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:layout_margin="5dp"/>
+            android:background="#FFEB3B"
+            android:gravity="center"
+            android:text="Gradient" />
+
         <TextView
             android:id="@+id/color"
             android:layout_width="0dp"
-            android:text="Color"
-            android:gravity="center"
-            android:background="#FFEB3B"
             android:layout_height="match_parent"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:layout_margin="5dp"/>
+            android:background="#FFEB3B"
+            android:gravity="center"
+            android:text="Color" />
 
     </LinearLayout>
 
@@ -103,22 +148,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/backgroundView" />
 
-
     <LinearLayout
         android:id="@+id/colorView"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:orientation="vertical"
         android:background="@color/gray"
+        android:orientation="vertical"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/rootView"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout">
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rootView">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/colorRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false" />
 
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -129,35 +181,58 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recyclerView">
 
-        <Button
-            android:id="@+id/left"
-            android:layout_width="wrap_content"
+        <ImageView
+            android:id="@+id/crop"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="left"
-            app:layout_constraintEnd_toStartOf="@+id/center"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/crop" />
 
-        <Button
-            android:id="@+id/center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="center"
-            app:layout_constraintEnd_toStartOf="@+id/right"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/left"
-            app:layout_constraintTop_toTopOf="parent" />
+        <ImageView
+            android:id="@+id/ratio"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/ratio" />
 
-        <Button
-            android:id="@+id/right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="right"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/center" />
+        <ImageView
+            android:id="@+id/border"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/border_one"
+            android:tint="@color/white" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/rotate"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/rotate" />
+
+        <ImageView
+            android:id="@+id/vertical_flip"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/v_flip"
+            android:tint="@color/white" />
+
+        <ImageView
+            android:id="@+id/horizontal_flip"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:src="@drawable/h_flip"
+            android:tint="@color/white" />
+
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,3 +1,3 @@
 package com.example.photo_editor.editor.model
 
-data class ColorModel (val colorName:Int)
+data class ColorModel (val colorName:String)

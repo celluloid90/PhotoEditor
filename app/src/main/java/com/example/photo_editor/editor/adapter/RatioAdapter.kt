@@ -9,14 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.photo_editor.databinding.ItemRatioBinding
 import com.example.photo_editor.editor.model.RatioModel
 
-class RatioAdapter (val context: Context, val gifModelList: ArrayList<RatioModel>, val listener: OnItemClickListener) :
-    RecyclerView.Adapter<RatioAdapter.CreateGifViewHolder>() {
+class RatioAdapter (val context: Context, val ratioModelList: ArrayList<RatioModel>,
+                    val listener: OnItemClickListener) :
+    RecyclerView.Adapter<RatioAdapter.RatioViewHolder>() {
 
     private lateinit var binding: ItemRatioBinding
 
     //private val debouncingListener = DebouncingOnClickListener()
 
-    inner class CreateGifViewHolder(itemview: View) : RecyclerView.ViewHolder(itemview) {
+    inner class RatioViewHolder(itemview: View) : RecyclerView.ViewHolder(itemview) {
 
         init {
             itemview.setOnClickListener(object :OnClickListener{
@@ -35,18 +36,18 @@ class RatioAdapter (val context: Context, val gifModelList: ArrayList<RatioModel
         fun onItemClick(position: Int)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CreateGifViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RatioViewHolder {
         binding = ItemRatioBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return CreateGifViewHolder(binding.root)
+        return RatioViewHolder(binding.root)
     }
 
-    override fun onBindViewHolder(holder: CreateGifViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RatioViewHolder, position: Int) {
         with(holder) {
-            binding.title.setText(gifModelList[position].gifName)
-            binding.image.setImageResource(gifModelList[position].image)
+            binding.title.setText(ratioModelList[position].gifName)
+            binding.image.setImageResource(ratioModelList[position].image)
         }
     }
     override fun getItemCount(): Int {
-        return gifModelList.size
+        return ratioModelList.size
     }
 }

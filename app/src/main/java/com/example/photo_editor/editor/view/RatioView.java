@@ -10,7 +10,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.SweepGradient;
 import android.net.Uri;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -21,6 +23,9 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.photo_editor.R;
+import com.example.photo_editor.editor.enums.BorderType;
+import com.example.photo_editor.editor.enums.FLIPTYPE;
 import com.example.photo_editor.editor.model.DataModel;
 import com.example.photo_editor.editor.utils.BackgroundType;
 import com.example.photo_editor.editor.utils.BlurBitmap;
@@ -53,6 +58,7 @@ public class RatioView extends View {
     private float x, y;
     float saveScale = 1f;
     CheckButtonType checkButtonType;
+    BorderType borderType;
     private float mScaleFactor = 1.0f;
     private ScaleGestureDetector mScaleDetector;
     boolean buttonClicked = false;
@@ -75,12 +81,19 @@ public class RatioView extends View {
     double rotaionNew;
     BackgroundType backgroundType;
     boolean edges = false;
+    String color;
+    FLIPTYPE flipType;
+    boolean flipV = false;
+    boolean flipH = false;
+    boolean isColorClicked = false;
+    boolean isAction = false;
+    Paint bgColorPaint;
 
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(@NonNull ScaleGestureDetector detector) {
-             mScaleFactor *= detector.getScaleFactor();
+            mScaleFactor *= detector.getScaleFactor();
             return true;
         }
     }
@@ -115,6 +128,7 @@ public class RatioView extends View {
         dataModel = new DataModel();
         paint = new Paint();
         paintEgds = new Paint();
+        bgColorPaint = new Paint();
     }
 
     public float getViewHeight() {
@@ -141,14 +155,47 @@ public class RatioView extends View {
         invalidate();
     }
 
+    public void setColor(String color) {
+        this.color = color;
+        Log.d("color", "setColor: " + color.toString());
+    }
+
+    public void setRotation() {
+        double mode = rotaionNew % 90;
+        rotaionNew += 90 - mode;
+        centerX = initialScale;
+        centerY = initialScale;
+        scaleForegroundImageCanvas();
+
+        invalidate();
+    }
+
+    public void setVerticalFlip() {
+        rotaionNew += 180;
+        invalidate();
+    }
+
     public void setOriginalRatio() {
         centerY = .5f;
         centerX = .5f;
         mScaleFactor = saveScale;
     }
 
+    public void setBorder(BorderType borderType) {
+        this.borderType = borderType;
+        invalidate();
+        Log.d("TAG", "setBorder: " + borderType);
+    }
+
     public void setBackBround(BackgroundType backgroundType) {
         this.backgroundType = backgroundType;
+        invalidate();
+    }
+
+    public void setFlipType(FLIPTYPE flipType) {
+
+        this.flipType = flipType;
+        invalidate();
     }
 
     public void setgellaryUri(Uri uri) {
@@ -285,10 +332,74 @@ public class RatioView extends View {
         rectF = new RectF(bmLeft, bmTop, bmRight, bmBottom);
         canvas.save();
         canvas.rotate((float) rotaionNew, rectF.centerX(), rectF.centerY());
+
+        flipCanvas(canvas);
+
+        drawBorder(canvas);
         canvas.drawBitmap(mBitmap, null, rectF, null);
+
         canvas.restore();
         // drawEdgs(canvas);
         drawLines(canvas);
+
+        if (isAction && backgroundType == BackgroundType.DROPPER) {
+
+            Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            paint.setStrokeWidth(2);
+            canvas.drawCircle(moveX, moveY - 200, 72, paint);
+            canvas.drawCircle(moveX, moveY - 200, 70, bgColorPaint);
+
+
+            canvas.drawCircle(moveX, moveY, 42, paint);
+            canvas.drawCircle(moveX, moveY, 40, bgColorPaint);
+
+        }
+    }
+
+    private void drawBorder(Canvas canvas) {
+        int borderSize = (int) (12 * mScaleFactor);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        if (borderType.equals(BorderType.WHITE)) {
+            paint.setColor(Color.WHITE);
+            canvas.drawRect(bmLeft - borderSize, bmTop - borderSize, bmRight + borderSize, bmBottom + borderSize, paint);
+        } else if (borderType.equals(BorderType.BLACK)) {
+            paint.setColor(Color.BLACK);
+            canvas.drawRect(bmLeft - borderSize, bmTop - borderSize, bmRight + borderSize, bmBottom + borderSize, paint);
+        } else if (borderType.equals(BorderType.NONE)) {
+            paint.setColor(Color.TRANSPARENT);
+            canvas.drawRect(bmLeft - borderSize, bmTop - borderSize, bmRight + borderSize, bmBottom + borderSize, paint);
+        } else if (borderType.equals(BorderType.COLOR)) {
+            int[] rainbow = getContext().getResources().getIntArray(R.array.rainbow);
+            Shader shader = new SweepGradient(mBitmap.getWidth() / 2, mBitmap.getHeight() / 2, rainbow, null);
+            paint.setShader(shader);
+            canvas.drawRect(bmLeft - borderSize, bmTop - borderSize, bmRight + borderSize, bmBottom + borderSize, paint);
+        }
+
+    }
+
+    private void flipCanvas(Canvas canvas) {
+
+        if (flipType == FLIPTYPE.VERTICAL_FLIP) {
+            if (!flipV) {
+                canvas.scale(-1f, 1f, getWidth() / 2, getHeight() / 2);
+                flipV = true;
+            } else if (flipV) {
+                canvas.scale(1f, 1f, getWidth() / 2, getHeight() / 2);
+                flipV = false;
+            }
+        }
+        if (flipType == FLIPTYPE.HORIZONTAL_FLIP) {
+            if (!flipH) {
+                canvas.scale(1f, -1f, getWidth() / 2, getHeight() / 2);
+                flipH = true;
+            } else if (flipH) {
+                canvas.scale(1f, 1f, getWidth() / 2, getHeight() / 2);
+                flipH = false;
+            }
+        }
+
     }
 
     private void drawEdgs(Canvas canvas) {
@@ -318,6 +429,8 @@ public class RatioView extends View {
                 BackgroundView.createBackground(canvas, mGalleryBackgroundBm, bgMatrix);
             }
         } else if (backgroundType == BackgroundType.GRADIENT) {
+
+
             int color = mBitmap.getPixel(mBitmap.getWidth() / 2, mBitmap.getHeight() / 2);
             int color2 = mBitmap.getPixel(0, 0);
             int r = Color.red(color);
@@ -330,8 +443,30 @@ public class RatioView extends View {
             Paint m_Paint = new Paint();
             m_Paint.setShader(new LinearGradient(0, 0, getWidth(), getHeight(), Color.rgb(r, g, b), Color.rgb(r1, g1, b1), Shader.TileMode.REPEAT));
             canvas.drawPaint(m_Paint);
+        } else if (backgroundType == BackgroundType.COLOR) {
+            isColorClicked = true;
+            canvas.drawColor(Color.parseColor(color));
+        } else if (isAction && (backgroundType == BackgroundType.DROPPER)) {
+            isColorClicked = true;
+
+            if (moveX > mBitmap.getWidth()) {
+                moveX = mBitmap.getWidth();
+            }
+            if (moveY > mBitmap.getHeight()) {
+                moveY = mBitmap.getHeight();
+            }
+
+            int color = mBitmap.getPixel((int) x, (int) y);
+            int r = Color.red(color);
+            int g = Color.green(color);
+            int b = Color.blue(color);
+            bgColorPaint.setColor(Color.rgb(r, g, b));
+
+            canvas.drawColor(Color.rgb(r, g, b));
+            // canvas.drawCircle(moveX, moveY, 200, bgColorPaint);
+
         }
-        invalidate();
+
     }
 
     private void drawLines(Canvas canvas) {
@@ -357,6 +492,7 @@ public class RatioView extends View {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_POINTER_DOWN: {
                 if (event.getPointerCount() > 1) {
+                    isAction = true;
                     pointAx = event.getX(0);
                     pointAy = event.getY(0);
                     pointBx = event.getX(1);
@@ -365,6 +501,7 @@ public class RatioView extends View {
             }
             case MotionEvent.ACTION_UP: {
                 mLastAngle = rotaionNew;
+                isAction = false;
             }
         }
 
@@ -377,18 +514,21 @@ public class RatioView extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
+                isAction = true;
                 x = event.getX();
                 y = event.getY();
 
             }
             case MotionEvent.ACTION_MOVE: {
-
+                isAction = true;
 
                 moveX = event.getX();
                 moveY = event.getY();
 
-                centerX += ((moveX - x) / getWidth());
-                centerY += ((moveY - y) / getHeight());
+                if (!isColorClicked) {
+                    centerX += ((moveX - x) / getWidth());
+                    centerY += ((moveY - y) / getHeight());
+                }
                 x = moveX;
                 y = moveY;
 
@@ -398,20 +538,14 @@ public class RatioView extends View {
 
             }
         }
+
+        Log.d("TAG", "x: " + x + " y : " + y);
         invalidate();
         return true;
 
     }
 
     private boolean doRotationEvent(MotionEvent event) {
-        //Calculate the angle between the two fingers
-        float deltaX = event.getX(0) - event.getX(1);
-        float deltaY = event.getY(0) - event.getY(1);
-        double radians = Math.atan(deltaY / deltaX);
-        //Convert to degrees
-        int degrees = (int) (radians * 180 / Math.PI);
-
-
         float pointCx;
         float pointCy;
         float pointDx;
@@ -419,11 +553,6 @@ public class RatioView extends View {
         double angle1;
         double angle2;
 
-        /*
-         * Must use getActionMasked() for switching to pick up pointer events.
-         * These events have the pointer index encoded in them so the return
-         * from getAction() won't match the exact action constant.
-         */
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
 
@@ -446,8 +575,6 @@ public class RatioView extends View {
                 rotaionNew += mLastAngle;
 
                 rotaionNew = rotaionNew % 360;
-                Log.d("TAG", "doRotationEvent: " + rotaionNew);
-
 
                 //rotation = (float) (degrees - mLastAngle);
 

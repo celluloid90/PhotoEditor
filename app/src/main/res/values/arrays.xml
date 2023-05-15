@@ -13,6 +13,28 @@
         <item>16:9</item>
     </string-array>
 
+    <string-array name="color_name">
+        <item>#17202A </item>
+        <item>#424949</item>
+        <item>#424949</item>
+        <item>#4D5656</item>
+        <item>#626567</item>
+        <item>#7B7D7D</item>
+        <item>#6E2C00</item>
+        <item>#6E2C00</item>
+        <item>#7E5109</item>
+        <item>#7E5109</item>
+        <item>#186A3B</item>
+        <item>#145A32</item>
+        <item>#0B5345</item>
+        <item>#0E6251</item>
+        <item>#0B5345</item>
+        <item>#0B5345</item>
+        <item>#0B5345</item>
+        <item>#0B5345</item>
+
+    </string-array>
+
     <integer-array name="ratio_icons">
         <item>@drawable/original</item>
         <item>@drawable/square</item>
@@ -25,4 +47,20 @@
         <item>@drawable/five_four</item>
         <item>@drawable/sixteen_nine</item>
     </integer-array>
+
+    <array name="rainbow">
+        <item>@color/bright_pink</item>
+        <item>@color/red</item>
+        <item>@color/orange</item>
+        <item>@color/yellow</item>
+        <item>@color/chartreuse</item>
+        <item>@color/green</item>
+        <item>@color/spring_green</item>
+        <item>@color/cyan</item>
+        <item>@color/azure</item>
+        <item>@color/blue</item>
+        <item>@color/violet</item>
+        <item>@color/magenta</item>
+    </array>
+
 </resources>
