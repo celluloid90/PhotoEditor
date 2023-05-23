@@ -12,11 +12,9 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.SweepGradient;
 import android.net.Uri;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.PixelCopy;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
@@ -27,7 +25,7 @@ import com.example.photo_editor.R;
 import com.example.photo_editor.editor.enums.BorderType;
 import com.example.photo_editor.editor.enums.FLIPTYPE;
 import com.example.photo_editor.editor.model.DataModel;
-import com.example.photo_editor.editor.utils.BackgroundType;
+import com.example.photo_editor.editor.enums.BackgroundType;
 import com.example.photo_editor.editor.utils.BlurBitmap;
 import com.example.photo_editor.editor.utils.CheckButtonType;
 import com.example.photo_editor.editor.utils.RoateImage;
@@ -151,7 +149,7 @@ public class RatioView extends View {
         // this.uri = uri;
         mBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
         mBackGroundBitmap = RoateImage.getRotatedBitmap(getContext(), uri);
-        mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext());
+        mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext(),20);
         invalidate();
     }
 
@@ -429,7 +427,6 @@ public class RatioView extends View {
                 BackgroundView.createBackground(canvas, mGalleryBackgroundBm, bgMatrix);
             }
         } else if (backgroundType == BackgroundType.GRADIENT) {
-
 
             int color = mBitmap.getPixel(mBitmap.getWidth() / 2, mBitmap.getHeight() / 2);
             int color2 = mBitmap.getPixel(0, 0);

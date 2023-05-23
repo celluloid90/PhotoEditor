@@ -6,15 +6,11 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
 import com.example.photo_editor.databinding.ActivityRatioBinding
-import com.example.photo_editor.databinding.ActivityUpdateBinding
 import com.example.photo_editor.editor.adapter.ColorAdapter
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.enums.BorderType
@@ -22,7 +18,7 @@ import com.example.photo_editor.editor.enums.FLIPTYPE
 import com.example.photo_editor.editor.model.ColorModel
 import com.example.photo_editor.editor.model.DataModel
 import com.example.photo_editor.editor.model.RatioModel
-import com.example.photo_editor.editor.utils.BackgroundType
+import com.example.photo_editor.editor.enums.BackgroundType
 import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
 import java.util.*
@@ -75,6 +71,7 @@ class RatioActivity : AppCompatActivity(), RatioAdapter.OnItemClickListener, Vie
         binding.rotate.setOnClickListener(this)
         binding.verticalFlip.setOnClickListener(this)
         binding.horizontalFlip.setOnClickListener(this)
+
     }
 
     private fun recyclerviewInitiate() {
