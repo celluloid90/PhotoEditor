@@ -13,6 +13,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.RecyclerView
 import com.bcl.android.collage_editor.R
 import com.bcl.android.collage_editor.customview.CollageTemplateView
 import com.bcl.android.collage_editor.utils.Constants.EXPORT_COLLAGE_TEMPLATE
@@ -34,7 +35,10 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
     lateinit var gallery: ImageView
     lateinit var adjustDone: ImageView
     lateinit var adjustContainer: ConstraintLayout
+    lateinit var ratioContainer: ConstraintLayout
+    lateinit var ratioDone: ImageView
     var isAdjustViewOpen: Boolean = false
+    var isRatioViewOpen: Boolean = false
     lateinit var zoomBar: SeekBar
     lateinit var edgeGapBar: SeekBar
     lateinit var edgeSmoothBar: SeekBar
@@ -44,6 +48,7 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
     private lateinit var mediaFiles: ArrayList<MediaFile>
     private var uriLists: ArrayList<Uri> = ArrayList()
     private lateinit var progressBar: ProgressBar
+    private lateinit var ratioRecyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,8 +75,10 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         background.setOnClickListener(this)
         gallery.setOnClickListener(this)
         adjustContainer.setOnClickListener(this)
+        ratioContainer.setOnClickListener(this)
         adjustDone.setOnClickListener(this)
         exportBtn.setOnClickListener(this)
+        ratioDone.setOnClickListener(this)
 
         zoomBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -133,12 +140,15 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         gallery = findViewById(R.id.gallery)
         adjustContainer = findViewById(R.id.adjust_container)
         adjustDone = findViewById(R.id.adjust_done)
+        ratioDone = findViewById(R.id.ratio_done)
         zoomBar = findViewById(R.id.zoom_seekbar)
         edgeGapBar = findViewById(R.id.edge_seekbar)
         edgeSmoothBar = findViewById(R.id.corner_seekbar)
         collageTemplateView = findViewById(R.id.img_background)
         exportBtn = findViewById(R.id.btn_next)
         progressBar = findViewById(R.id.progress_bar)
+        ratioRecyclerView = findViewById(R.id.ratio_recycler_view)
+        ratioContainer = findViewById(R.id.ratio_container)
     }
 
     override fun onClick(v: View?) {
@@ -146,25 +156,37 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
             close -> {
                 finish()
             }
+
             ratio -> {
-                Toast.makeText(this, "Not Implemented!", Toast.LENGTH_SHORT).show()
+                openRatioView()
             }
+
             adjust -> {
                 openAdjustView()
             }
+
             background -> {
                 Toast.makeText(this, "Not Implemented!", Toast.LENGTH_SHORT).show()
             }
+
             gallery -> {
                 Toast.makeText(this, "Not Implemented!", Toast.LENGTH_SHORT).show()
             }
+
             adjustContainer -> {
 //                Empty click handled.
             }
+
             adjustDone -> {
                 isAdjustViewOpen = false
                 Utils.viewSlideDown(adjustContainer)
             }
+
+            ratioDone -> {
+                isRatioViewOpen = false
+                Utils.viewSlideDown(ratioContainer)
+            }
+
             exportBtn -> {
                 if (isAdjustViewOpen) {
                     isAdjustViewOpen = false
@@ -207,6 +229,16 @@ class EditHome : AppCompatActivity(), View.OnClickListener {
         } else {
             isAdjustViewOpen = false
             Utils.viewSlideDown(adjustContainer)
+        }
+    }
+
+    private fun openRatioView() {
+        if (!isRatioViewOpen) {
+            isRatioViewOpen = true
+            Utils.viewSlideUp(ratioContainer)
+        } else {
+            isRatioViewOpen = false
+            Utils.viewSlideDown(ratioContainer)
         }
     }
 }
