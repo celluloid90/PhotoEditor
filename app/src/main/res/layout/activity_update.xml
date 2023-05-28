@@ -97,7 +97,7 @@
         android:layout_height="160dp"
         android:background="@color/background"
         android:orientation="vertical"
-        android:visibility="gone"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -108,21 +108,42 @@
             android:layout_height="110dp"
             android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
-            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/bottomView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <include
+            android:id="@+id/bottomView"
+            layout="@layout/bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/blurLayout"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:background="@color/background"
+        android:orientation="vertical"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
         <LinearLayout
             android:id="@+id/seekbarLayout"
             android:layout_width="match_parent"
             android:layout_height="110dp"
-            android:clipToPadding="false"
-            android:nestedScrollingEnabled="false"
-            android:visibility="gone"
             android:orientation="horizontal"
-            app:layout_constraintBottom_toTopOf="@+id/bottomView"
+            app:layout_constraintBottom_toTopOf="@+id/blurBottomView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -152,7 +173,7 @@
         </LinearLayout>
 
         <include
-            android:id="@+id/bottomView"
+            android:id="@+id/blurBottomView"
             layout="@layout/bottom_bar"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -160,7 +181,47 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
+            app:layout_constraintTop_toBottomOf="@+id/seekbarLayout" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/colorLayout"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:background="@color/background"
+        android:orientation="vertical"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/colorRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@+id/colorBottomView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+
+        </androidx.recyclerview.widget.RecyclerView>
+
+        <include
+            android:id="@+id/colorBottomView"
+            layout="@layout/bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/colorRecyclerView" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -352,7 +413,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-
             app:layout_constraintTop_toBottomOf="@+id/backgroundItemView">
 
             <LinearLayout

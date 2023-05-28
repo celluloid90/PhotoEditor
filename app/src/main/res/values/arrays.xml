@@ -32,8 +32,56 @@
         <item>#0B5345</item>
         <item>#0B5345</item>
         <item>#0B5345</item>
-
     </string-array>
+
+    <string-array name="background_color_name">
+        <item>Dropper</item>
+        <item>#17202A</item>
+        <item>#1B2631</item>
+        <item>#424949</item>
+        <item>#4D5656</item>
+        <item>#626567</item>
+        <item>#7B7D7D</item>
+        <item>#6E2C00</item>
+        <item>#784212</item>
+        <item>#7E5109</item>
+        <item>#7D6608</item>
+        <item>#186A3B</item>
+        <item>#145A32</item>
+        <item>#0B5345</item>
+        <item>#0E6251</item>
+        <item>#1B4F72</item>
+        <item>#154360</item>
+        <item>#4A235A</item>
+        <item>#512E5F</item>
+        <item>#78281F</item>
+        <item>#641E16</item>
+    </string-array>
+
+    <integer-array name="background_color_icon">
+        <item>@drawable/dropper_one</item>
+        <item>@drawable/color_one</item>
+        <item>@drawable/color_two</item>
+        <item>@drawable/color_three</item>
+        <item>@drawable/color_four</item>
+        <item>@drawable/color_five</item>
+        <item>@drawable/color_six</item>
+        <item>@drawable/color_seven</item>
+        <item>@drawable/color_eight</item>
+        <item>@drawable/color_nine</item>
+        <item>@drawable/color_ten</item>
+        <item>@drawable/color_eleven</item>
+        <item>@drawable/color_twelve</item>
+        <item>@drawable/color_thirteen</item>
+        <item>@drawable/color_fourteen</item>
+        <item>@drawable/color_fifteen</item>
+        <item>@drawable/color_sixteen</item>
+        <item>@drawable/color_seventeen</item>
+        <item>@drawable/color_eighteen</item>
+        <item>@drawable/color_ninteen</item>
+        <item>@drawable/color_twenty</item>
+    </integer-array>
+
 
     <integer-array name="ratio_icons">
         <item>@drawable/original</item>

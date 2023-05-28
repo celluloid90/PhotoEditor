@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.view.View.OnClickListener
+import android.view.animation.TranslateAnimation
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
@@ -15,21 +16,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.photo_editor.R
 import com.example.photo_editor.databinding.ActivityUpdateBinding
+import com.example.photo_editor.editor.adapter.BackgroundColorAdapter
 import com.example.photo_editor.editor.adapter.RatioAdapter
 import com.example.photo_editor.editor.enums.BorderType
 import com.example.photo_editor.editor.enums.CanvasBackgroundType
+import com.example.photo_editor.editor.model.BackgroundColorModel
 import com.example.photo_editor.editor.model.RatioModel
 import com.example.photo_editor.editor.utils.CanvasRatioValue
 import com.example.photo_editor.editor.utils.CheckButtonType
 import com.example.photo_editor.editor.utils.RoateImage
+import com.example.photo_editor.editor.utils.Utils
 import java.util.Arrays
 
 class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItemClickListener,
-    OnSeekBarChangeListener {
+    OnSeekBarChangeListener, BackgroundColorAdapter.OnBackgroundColorItemClick {
 
     private lateinit var binding: ActivityUpdateBinding
     lateinit var itemName: ArrayList<String>
     lateinit var itemColor: ArrayList<String>
+    lateinit var colorName: ArrayList<String>
     private var bitmap: Bitmap? = null
     private var myUri: Uri? = null
     private var imageUri: Uri? = null
@@ -47,6 +52,9 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         setContentView(binding.root)
         initClickListener()
         recyclerviewInitiate()
+        colorRecyclerViewInitiate()
+
+        selected = true;
 
         val extras = intent.extras
         myUri = Uri.parse(extras!!.getString(IMAGE_URI))
@@ -58,6 +66,7 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         binding.editView.setBorder(BorderType.NONE);
 
     }
+
 
     private fun initClickListener() {
         binding.crop.setOnClickListener(this)
@@ -77,6 +86,8 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         binding.center.setOnClickListener(this)
         binding.right.setOnClickListener(this)
         binding.seekbar.setOnSeekBarChangeListener(this)
+        binding.colorBottomView.rightSideImageView.setOnClickListener(this)
+        binding.blurBottomView.rightSideImageView.setOnClickListener(this)
 
     }
 
@@ -101,10 +112,26 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         binding.recyclerView.adapter = adapter
     }
 
+    private fun colorRecyclerViewInitiate() {
+        colorName =
+            ArrayList<String>(Arrays.asList(*resources.getStringArray(R.array.background_color_name)))
+        val colorImage = resources?.obtainTypedArray(R.array.background_color_icon)
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        binding.colorRecyclerView.layoutManager = layoutManager
+        val backgroundColorList = ArrayList<BackgroundColorModel>()
+        for (i in 0 until colorName.size) {
+            backgroundColorList.add(
+                BackgroundColorModel(
+                    colorName[i], colorImage?.getResourceId(i, 0)!!
+                )
+            )
+        }
+        val adapter = this.let { BackgroundColorAdapter(it, backgroundColorList, this) }
+        binding.colorRecyclerView.adapter = adapter
+    }
 
     override fun onClick(v: View?) {
-
-
         if (v == binding.left) {
             binding.editView.checkClickedButtonType(CheckButtonType.LEFT)
         } else if (v == binding.center) {
@@ -114,12 +141,10 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         } else if (v == binding.crop) {
             Toast.makeText(this, "Crop", Toast.LENGTH_SHORT).show()
         } else if (v == binding.ratio) {
-            binding.ratioLayout.visibility = View.VISIBLE
             binding.linearLayout.visibility = View.INVISIBLE
-            binding.recyclerView.visibility = View.VISIBLE
-            binding.seekbarLayout.visibility = View.INVISIBLE
+            binding.ratioLayout.visibility = View.VISIBLE
             binding.alignLayout.visibility = View.VISIBLE
-            binding.bottomView.centerText.text = "Ratio"
+
         } else if (v == binding.border) {
             if (count == 0) {
                 binding.editView.setBorder(BorderType.NONE);
@@ -145,19 +170,18 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
         } else if (v == binding.black) {
             binding.editView.setBackgroundType(CanvasBackgroundType.BLACK)
         } else if (v == binding.blur) {
-
             if (!selected) {
                 binding.editView.setBackgroundType(CanvasBackgroundType.BLUR)
                 selected = true;
             } else if (selected) {
-
-                binding.ratioLayout.visibility = View.VISIBLE
+                binding.blurLayout.visibility = View.VISIBLE
                 binding.linearLayout.visibility = View.INVISIBLE
-                binding.seekbarLayout.visibility = View.VISIBLE
-                binding.recyclerView.visibility = View.INVISIBLE
-                binding.bottomView.centerText.text = "Blur"
+                selected = false
             }
 
+        } else if (v == binding.blurBottomView.rightSideImageView) {
+            binding.blurLayout.visibility = View.INVISIBLE
+            binding.linearLayout.visibility = View.VISIBLE
         } else if (v == binding.gradient) {
             binding.editView.setBackgroundType(CanvasBackgroundType.GRADIENT)
         } else if (v == binding.gallery) {
@@ -165,12 +189,18 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
             val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
             startActivityForResult(gallery, SELECT_PICTURE)
         } else if (v == binding.color) {
-            binding.editView.setBackgroundType(CanvasBackgroundType.COLOR)
+            binding.linearLayout.visibility = View.INVISIBLE
+            binding.colorLayout.visibility = View.VISIBLE
+            binding.colorBottomView.centerText.text = "Color"
+
         } else if (v == binding.bottomView.rightSideImageView) {
-            binding.ratioLayout.visibility = View.INVISIBLE
             binding.linearLayout.visibility = View.VISIBLE
-            binding.alignLayout.visibility = View.GONE
-            selected = false;
+            binding.ratioLayout.visibility = View.INVISIBLE
+            binding.alignLayout.visibility = View.INVISIBLE
+        } else if (v == binding.colorBottomView.rightSideImageView) {
+            binding.linearLayout.visibility = View.VISIBLE
+            binding.colorLayout.visibility = View.INVISIBLE
+            binding.alignLayout.visibility = View.INVISIBLE
         }
 
     }
@@ -199,7 +229,6 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
     }
 
     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-        Log.d("TAG", "onProgressChanged: " + progress)
         binding.editView.setBlurProgressValue(progress)
         binding.seekBarvalue.text = (progress).toString();
 
@@ -211,5 +240,14 @@ class UpdateActivity : AppCompatActivity(), OnClickListener, RatioAdapter.OnItem
 
     override fun onStopTrackingTouch(seekBar: SeekBar?) {
 
+    }
+
+    override fun onBgColorItemClick(position: Int) {
+        if (position == 0) {
+            Toast.makeText(this, position.toString(), Toast.LENGTH_SHORT).show()
+        } else {
+            binding.editView.setBackgroundType(CanvasBackgroundType.COLOR)
+            binding.editView.setColor(colorName[position].toString())
+        }
     }
 }

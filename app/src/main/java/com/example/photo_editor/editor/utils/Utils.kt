@@ -1,6 +1,8 @@
 package com.example.photo_editor.editor.utils
 
+import android.view.View
 import android.view.View.OnClickListener
+import android.view.animation.TranslateAnimation
 import com.example.photo_editor.databinding.ActivityUpdateBinding
 
 class Utils {
@@ -22,6 +24,31 @@ class Utils {
             binding.left.setOnClickListener(listener)
             binding.center.setOnClickListener(listener)
             binding.right.setOnClickListener(listener)
+        }
+
+        fun slideUp(view: View) {
+            view.visibility = View.VISIBLE
+            val animate = TranslateAnimation(
+                0f,  // fromXDelta
+                0f,  // toXDelta
+                view.height.toFloat(),  // fromYDelta
+                0f
+            ) // toYDelta
+            animate.duration = 400
+            animate.fillAfter = true
+            view.startAnimation(animate)
+        }
+        fun slideDown(view: View) {
+            val animate = TranslateAnimation(
+                0f,  // fromXDelta
+                0f,  // toXDelta
+                0f,  // fromYDelta
+                view.height.toFloat()
+            ) // toYDelta
+            animate.duration = 400
+            animate.fillAfter = true
+            view.startAnimation(animate)
+
         }
 
     }

@@ -68,6 +68,8 @@ public class EditorView extends View {
     private ScaleGestureDetector mScaleDetector;
     private BorderType borderType;
 
+    private String color;
+
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
@@ -193,6 +195,11 @@ public class EditorView extends View {
         mBackGroundBitmap = BlurBitmap.Companion.blurBitmap(mBackGroundBitmap, getContext(), 20);
     }
 
+    public void setColor(String color) {
+        this.color = color;
+        Log.d("color", "setColor: " + color.toString());
+    }
+
     private void scaleForegroundImageCanvas() {
         bitmapWidth = mBitmap.getWidth();
         bitmapHeight = mBitmap.getHeight();
@@ -254,7 +261,7 @@ public class EditorView extends View {
         super.onDraw(canvas);
 
         BackgroundView.setBackground(canvasBackgroundType, canvas, mBackGroundBitmap, bgMatrix,
-                mGalleryBackgroundBm, mBitmap, getHeight(), getWidth());
+                mGalleryBackgroundBm, mBitmap, getHeight(), getWidth(),color);
         // BackgroundView.createBackground(canvas, mBackGroundBitmap, bgMatrix);
         bmLeft = getWidth() * centerX - (finalWidth / 2) * mScaleFactor;
         bmTop = getHeight() * centerY - (finalHeight / 2) * mScaleFactor;

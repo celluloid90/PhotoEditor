@@ -17,8 +17,8 @@ import com.example.photo_editor.editor.utils.CheckButtonType;
 public class BackgroundView {
 
     public static void setBackground(CanvasBackgroundType canvasBackgroundType, Canvas canvas,
-                                     Bitmap mBackGroundBitmap, Matrix bgMatrix,Bitmap galleryImageBitmap,
-                                     Bitmap bitmap,float height, float width){
+                                     Bitmap mBackGroundBitmap, Matrix bgMatrix, Bitmap galleryImageBitmap,
+                                     Bitmap bitmap, float height, float width,String mcolor) {
 
         if (canvasBackgroundType == CanvasBackgroundType.WHITE) {
             canvas.drawColor(Color.WHITE);
@@ -26,12 +26,11 @@ public class BackgroundView {
             canvas.drawColor(Color.BLACK);
         } else if (canvasBackgroundType == CanvasBackgroundType.BLUR) {
             BackgroundView.createBackground(canvas, mBackGroundBitmap, bgMatrix);
-        }else if (canvasBackgroundType == CanvasBackgroundType.PHOTO) {
+        } else if (canvasBackgroundType == CanvasBackgroundType.PHOTO) {
             if (galleryImageBitmap != null) {
                 BackgroundView.createBackground(canvas, galleryImageBitmap, bgMatrix);
             }
-        }
-        else if (canvasBackgroundType == CanvasBackgroundType.GRADIENT){
+        } else if (canvasBackgroundType == CanvasBackgroundType.GRADIENT) {
             int color = bitmap.getPixel(bitmap.getWidth() / 2, bitmap.getHeight() / 2);
             int color2 = bitmap.getPixel(0, 0);
             int r = Color.red(color);
@@ -44,10 +43,12 @@ public class BackgroundView {
             Paint m_Paint = new Paint();
             m_Paint.setShader(new LinearGradient(0, 0, width, height, Color.rgb(r, g, b), Color.rgb(r1, g1, b1), Shader.TileMode.REPEAT));
             canvas.drawPaint(m_Paint);
+        } else if (canvasBackgroundType == CanvasBackgroundType.COLOR) {
+            canvas.drawColor(Color.parseColor(mcolor));
         }
     }
 
-    public static void createBackground(Canvas canvas, Bitmap mBackGroundBitmap, Matrix bgMatrix){
+    public static void createBackground(Canvas canvas, Bitmap mBackGroundBitmap, Matrix bgMatrix) {
         float scalemWidth = (float) canvas.getWidth() / mBackGroundBitmap.getWidth();
         float scalemHeight = (float) canvas.getHeight() / mBackGroundBitmap.getHeight();
         float maxScale = Math.max(scalemWidth, scalemHeight);
