@@ -17,7 +17,7 @@ public class FilePickerManager {
             .setSkipZeroSizeFiles(true)
             .enableImageCapture(true)
             .enableVideoCapture(false)
-            .setSingleChoiceMode(false)
+            .setSingleChoiceMode(true)
             .enableCaptureTop(true)
             .setShowFileDuration(false)
             .setEnableDropDown(true)
