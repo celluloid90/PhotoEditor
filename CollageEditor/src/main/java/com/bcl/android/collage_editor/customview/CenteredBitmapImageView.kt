@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Region
 import android.util.AttributeSet
@@ -14,6 +15,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.graphics.toRectF
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /**
@@ -45,7 +48,7 @@ class CenteredBitmapImageView @JvmOverloads constructor(
     private var bottomCircleX: Float = 0f
     private var topCircleY: Float = 0f
     private var bottomCircleY: Float = 0f
-    private var radius: Float = 20f
+    private var radius: Float = 30f
     private var topRegionTouch = false
     private var bottomRegionTouch = false
     private var topTranslationX: Float = 0f
@@ -56,8 +59,12 @@ class CenteredBitmapImageView @JvmOverloads constructor(
     private var bottomLastTouchPoint: PointF = PointF()
     private var determinationTouch = 0.0f
     private var deltaX: Float = 0.0f
-    private var topRegion: Region = Region()
-    private var bottomRegion: Region = Region()
+    private val GAP_BETWEEN: Float = 0f
+
+    //    private var topRegion: Region = Region()
+//    private var bottomRegion: Region = Region()
+    private var topBounds = RectF()
+    private var bottomBounds = RectF()
     private val TAG = "LogcatTag"
 
     private var path: Path = Path()
@@ -124,17 +131,18 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
         if (topCroppedBitmap != null) {
             canvas?.drawBitmap(topCroppedBitmap!!, topTranslationX, topTranslationY, null)
-//            canvas?.drawRect(topTranslationX, topTranslationY, )
-//            canvas?.drawCircle(topCircleX, topCircleY, radius, paint1)
+            canvas?.drawCircle(topBounds.left, topBounds.top, radius, paint1)
         }
 
         if (bottomCroppedBitmap != null) {
             canvas?.drawBitmap(bottomCroppedBitmap!!, bottomTranslationX, bottomTranslationY, null)
-//            canvas?.drawCircle(bottomCircleX, bottomCircleY, radius, paint2)
+            canvas?.drawCircle(
+                bottomBounds.right, bottomBounds.bottom + GAP_BETWEEN, radius, paint2
+            )
         }
 
-        canvas?.drawRect(topRegion.bounds, paint1)
-        canvas?.drawRect(bottomRegion.bounds, paint2)
+        canvas?.drawRect(topBounds, paint1)
+        canvas?.drawRect(bottomBounds, paint2)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -153,15 +161,18 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
                     path.moveTo(x, y)
                     pointsList.add(Pair(x, y))
+                    determinationTouch = x
                 }
 
-                determinationTouch = x
-
-                if (topRegion.contains(x.toInt(), y.toInt())) {
+                if (topBounds.contains(x, y)) {
+                    Log.d("gjhsdfgge", "top touch")
                     topLastTouchPoint.set(x, y)
                     topRegionTouch = true
                     bottomRegionTouch = false
-                } else if (bottomRegion.contains(x.toInt(), y.toInt())) {
+                }
+
+                if (bottomBounds.contains(x, y)) {
+                    Log.d("gjhsdfgge", " bottom touch")
                     bottomLastTouchPoint.set(x, y)
                     topRegionTouch = false
                     bottomRegionTouch = true
@@ -169,63 +180,84 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
                 if (isInsideTopCircle(x, y)) {
                     paint1.color = Color.BLACK
-                    invalidate()
+//                    invalidate()
                 }
 
                 if (isInsideBottomCircle(x, y)) {
                     paint2.color = Color.BLACK
-                    invalidate()
+//                    invalidate()
                 }
+                Log.d("dgsjskgsgsr down", "$topRegionTouch $bottomRegionTouch")
+
+                invalidate()
+                return true
             }
 
             MotionEvent.ACTION_MOVE -> {
                 if (isMoving) {
                     path.lineTo(x, y)
                     pointsList.add(Pair(x, y))
+                    deltaX = x - determinationTouch
                 }
 
-                deltaX = x - determinationTouch
-
-                Log.d("onTouchEvent", "$topRegionTouch $bottomRegionTouch")
-
+                Log.d("dgsjskgsgsr move", "$topRegionTouch $bottomRegionTouch")
                 if (topCroppedBitmap != null && topRegionTouch) {
                     val dx = x - topLastTouchPoint.x
                     val dy = y - topLastTouchPoint.y
 
-                    val newTranslationX = topTranslationX + dx
-                    val newTranslationY = topTranslationY + dy
+                    topBounds.offset(dx, dy)
 
-                    val maxTranslationX = width.toFloat() - topCroppedBitmap!!.width
-                    val maxTranslationY = height.toFloat() - topCroppedBitmap!!.height / 2
+                    topTranslationX += dx
+                    topTranslationY += dy
+
+                    /*val maxTranslationX = leftStart
+                    val maxTranslationY = height.toFloat() - topBounds.height() - topStart
                     topTranslationX = newTranslationX.coerceIn(-leftStart, maxTranslationX)
-                    topTranslationY = newTranslationY.coerceIn(-topStart, maxTranslationY)
+                    topTranslationY = newTranslationY.coerceIn(-topStart, maxTranslationY)*/
 
                     topLastTouchPoint.set(x, y)
-                } else if (bottomCroppedBitmap != null && bottomRegionTouch) {
+
+                    paint1.color = Color.RED
+//                    invalidate()
+                }
+
+                if (bottomCroppedBitmap != null && bottomRegionTouch) {
                     val dx = x - bottomLastTouchPoint.x
                     val dy = y - bottomLastTouchPoint.y
 
-                    val newTranslationX = bottomTranslationX + dx
-                    val newTranslationY = bottomTranslationY + dy
+                    bottomBounds.offset(dx, dy)
 
-                    val maxTranslationX = width.toFloat() - bottomCroppedBitmap!!.width
-                    val maxTranslationY = height.toFloat() - bottomCroppedBitmap!!.height
+                    bottomTranslationX += dx
+                    bottomTranslationY += dy
+
+                    /*val maxTranslationX = leftStart
+                    val maxTranslationY = topStart
                     bottomTranslationX = newTranslationX.coerceIn(-leftStart, maxTranslationX)
-                    bottomTranslationY = newTranslationY.coerceIn(-topStart * 2, maxTranslationY)
+                    bottomTranslationY = newTranslationY.coerceIn(
+                        -topStart - bottomBounds.height(), maxTranslationY
+                    )*/
 
                     bottomLastTouchPoint.set(x, y)
+
+                    paint2.color = Color.GREEN
+//                    invalidate()
                 }
+
+                invalidate()
+                return true
             }
 
             MotionEvent.ACTION_UP -> {
-                if (deltaX < 0) return false
-
                 if (isMoving) {
                     path.lineTo(x, y)
                     pointsList.add(Pair(x, y))
                     determinationTouch = x
 
-                    cutShape()
+                    if (deltaX < 0) {
+                        cutShape(x, y, false)
+                    } else {
+                        cutShape(x, y, true)
+                    }
                     topCroppedBitmap = cropBitmapByPath(
                         modifiedBitmap!!.copy(modifiedBitmap!!.config, true), path1, true
                     )
@@ -240,27 +272,29 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                 topRegionTouch = false
                 bottomRegionTouch = false
 
+                Log.d("dgsjskgsgsr up", "$topRegionTouch $bottomRegionTouch")
 //                path1.reset()
 //                path2.reset()
                 modifiedBitmap = null
+
+                invalidate()
+                return true
             }
         }
 
-        invalidate()
-
-        return true
+        return false
     }
 
     private fun isInsideBottomCircle(x: Float, y: Float): Boolean {
-        val dx = x - bottomCircleX
-        val dy = y - bottomCircleY
+        val dx = x - bottomBounds.right
+        val dy = y - bottomBounds.bottom - GAP_BETWEEN
         val distance = sqrt((dx * dx + dy * dy).toDouble())
         return distance <= radius
     }
 
     private fun isInsideTopCircle(x: Float, y: Float): Boolean {
-        val dx = x - topCircleX
-        val dy = y - topCircleY
+        val dx = x - topBounds.left
+        val dy = y - topBounds.top
         val distance = sqrt((dx * dx + dy * dy).toDouble())
         return distance <= radius
     }
@@ -269,32 +303,34 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         originalBitmap: Bitmap, path: Path, isTopPath: Boolean
     ): Bitmap {
         val croppedBitmap = Bitmap.createBitmap(
-            originalBitmap.width + leftStart.toInt(),
-            originalBitmap.height + topStart.toInt(),
-            Bitmap.Config.ARGB_8888
+            width, height, Bitmap.Config.ARGB_8888
         )
         val canvas = Canvas(croppedBitmap)
-//        if (!isTopPath) canvas.translate(0f, 30f)
+        if (!isTopPath) canvas.translate(0f, GAP_BETWEEN)
         canvas.clipPath(path)
         canvas.drawBitmap(originalBitmap, leftStart, topStart, null)
         return croppedBitmap
     }
 
-    private fun createRegionFromPath(path: Path): Region {
-        val bounds = RectF()
-        path.computeBounds(bounds, true)
+    private fun createRegionFromPath(path: Path, rectF: RectF, x: Float, y: Float): Rect {
+        var rectTop = rectF.top.toInt()
+        path.computeBounds(rectF, true)
+
+        if (path == path2) {
+            rectTop = (rectF.top + GAP_BETWEEN).roundToInt()
+        }
 
         val region = Region()
         region.setPath(
             path, Region(
-                bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt()
+                rectF.left.toInt(), rectTop, rectF.right.toInt(), rectF.bottom.toInt()
             )
         )
 
-        return region
+        return region.bounds
     }
 
-    private fun cutShape() {
+    private fun cutShape(x: Float, y: Float, leftToRight: Boolean) {
         path1.reset()
         path2.reset()
         leftPointsList.clear()
@@ -304,13 +340,49 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         lastRightPointY = 0.0f
         lastLeftPointY = 0.0f
 
-        for (i in pointsList.indices.reversed()) {
-            if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
-                rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
-            } else if (pointsList[i].first <= leftStart) {
-                leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
-            } else {
-                middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+        if (leftToRight) {
+            for (i in pointsList.indices.reversed()) {
+                if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
+                    Log.d(
+                        "esgjsdjgsgter 0 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].first <= leftStart) {
+                    Log.d(
+                        "esgjsdjgsgter 2 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else {
+                    Log.d(
+                        "esgjsdjgsgter 4 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                }
+            }
+        } else {
+            for (i in pointsList.indices) {
+                if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
+                    Log.d(
+                        "esgjsdjgsgter 00 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].first <= leftStart) {
+                    Log.d(
+                        "esgjsdjgsgter 22 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else {
+                    Log.d(
+                        "esgjsdjgsgter 44 ",
+                        pointsList[i].first.toString() + " | " + pointsList[i].second
+                    )
+                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                }
             }
         }
 
@@ -329,6 +401,7 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         path1.moveTo(leftStart, topStart)
         path1.lineTo(modifiedBitmap!!.width.toFloat() + leftStart, topStart)
         path1.lineTo(modifiedBitmap!!.width.toFloat() + leftStart, lastRightPointY)
+
         for (i in middlePointsList.indices) {
             path1.lineTo(middlePointsList[i].first, middlePointsList[i].second)
         }
@@ -351,9 +424,8 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
         isMoving = false
 
-
-        topRegion = createRegionFromPath(path1)
-        bottomRegion = createRegionFromPath(path2)
+        topBounds = createRegionFromPath(path1, topBounds, x, y).toRectF()
+        bottomBounds = createRegionFromPath(path2, bottomBounds, x, y).toRectF()
     }
 
     private fun findLastLeftPointY(): Float {
@@ -363,11 +435,25 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         return diff + leftPointsList[0].second
     }
 
+    private fun findLastDownPointX(): Float {
+        var diff =
+            ((middlePointsList[middlePointsList.size - 1].first - leftPointsList[0].first) / (middlePointsList[middlePointsList.size - 1].second - leftPointsList[0].second))
+        diff *= (topStart - leftPointsList[0].first)
+        return diff + leftPointsList[0].first
+    }
+
     private fun findLastRightPointY(): Float {
         var diff =
             ((rightPointsList[rightPointsList.size - 1].second - middlePointsList[0].second) / (rightPointsList[rightPointsList.size - 1].first - middlePointsList[0].first))
         diff *= ((modifiedBitmap!!.width + leftStart) - middlePointsList[0].first)
         return diff + middlePointsList[0].second
+    }
+
+    private fun findLastUpPointX(): Float {
+        var diff =
+            ((rightPointsList[rightPointsList.size - 1].first - middlePointsList[0].first) / (rightPointsList[rightPointsList.size - 1].second - middlePointsList[0].second))
+        diff *= ((modifiedBitmap!!.height + topStart) - middlePointsList[0].second)
+        return diff + middlePointsList[0].first
     }
 
     fun reset() {
@@ -376,8 +462,10 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         paint2.color = Color.GREEN
         path1.reset()
         path2.reset()
-        topRegion = Region()
-        bottomRegion = Region()
+        topBounds = RectF()
+        bottomBounds = RectF()
+//        topRegion = Region()
+//        bottomRegion = Region()
         topCroppedBitmap = null
         bottomCroppedBitmap = null
         topLastTouchPoint = PointF()
@@ -392,3 +480,4 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         invalidate()
     }
 }
+
