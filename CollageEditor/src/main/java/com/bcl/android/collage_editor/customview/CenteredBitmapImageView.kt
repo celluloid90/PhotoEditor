@@ -43,7 +43,13 @@ class CenteredBitmapImageView @JvmOverloads constructor(
     private val leftPointsList: ArrayList<Pair<Float, Float>> = ArrayList()
     private val middlePointsList: ArrayList<Pair<Float, Float>> = ArrayList()
     private var lastRightPointY = 0.0f
+    private var lastRightPointY1 = 0.0f
     private var lastLeftPointY = 0.0f
+    private var lastLeftPointY1 = 0.0f
+    private var lastTopPointX = 0.0f
+    private var lastTopPointX1 = 0.0f
+    private var lastBottomPointX = 0.0f
+    private var lastBottomPointX1 = 0.0f
     private var topCircleX: Float = 0f
     private var bottomCircleX: Float = 0f
     private var topCircleY: Float = 0f
@@ -59,10 +65,16 @@ class CenteredBitmapImageView @JvmOverloads constructor(
     private var bottomLastTouchPoint: PointF = PointF()
     private var determinationTouch = 0.0f
     private var deltaX: Float = 0.0f
-    private val GAP_BETWEEN: Float = 0f
+    private val GAP_BETWEEN: Float = 20f
+    private var initX: Float = 0f
+    private var initY: Float = 0f
+    private var moveLeft: Boolean = false
+    private var moveRight: Boolean = false
+    private var moveTop: Boolean = false
+    private var moveDown: Boolean = false
+    private var abovePointList: ArrayList<Pair<Float, Float>> = ArrayList()
+    private var belowPointList: ArrayList<Pair<Float, Float>> = ArrayList()
 
-    //    private var topRegion: Region = Region()
-//    private var bottomRegion: Region = Region()
     private var topBounds = RectF()
     private var bottomBounds = RectF()
     private val TAG = "LogcatTag"
@@ -79,8 +91,8 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
     private var paint1 = Paint().apply {
         color = Color.RED
-        style = Paint.Style.STROKE
-        strokeWidth = 10f
+        style = Paint.Style.FILL_AND_STROKE
+        strokeWidth = 20f
         isAntiAlias = true
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
@@ -88,11 +100,15 @@ class CenteredBitmapImageView @JvmOverloads constructor(
 
     private var paint2 = Paint().apply {
         color = Color.GREEN
-        style = Paint.Style.STROKE
-        strokeWidth = 10f
+        style = Paint.Style.FILL_AND_STROKE
+        strokeWidth = 20f
         isAntiAlias = true
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
+    }
+
+    init {
+        setBackgroundColor(Color.WHITE)
     }
 
     fun setBitmap(bitmap: Bitmap) {
@@ -122,36 +138,37 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                 drawBitmap(modifiedBitmap!!, leftStart, topStart, null)
                 drawPath(path, paint)
 
-//                drawPath(path1, paint1)
-//                drawPath(path2, paint2)
-
                 restore()
             }
         }
 
         if (topCroppedBitmap != null) {
             canvas?.drawBitmap(topCroppedBitmap!!, topTranslationX, topTranslationY, null)
+//            canvas?.drawRect(topBounds, paint1)
             canvas?.drawCircle(topBounds.left, topBounds.top, radius, paint1)
         }
 
         if (bottomCroppedBitmap != null) {
             canvas?.drawBitmap(bottomCroppedBitmap!!, bottomTranslationX, bottomTranslationY, null)
+//            canvas?.drawRect(bottomBounds, paint2)
             canvas?.drawCircle(
                 bottomBounds.right, bottomBounds.bottom + GAP_BETWEEN, radius, paint2
             )
         }
 
-        canvas?.drawRect(topBounds, paint1)
-        canvas?.drawRect(bottomBounds, paint2)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val x = event.x /*- width / 2f + bitmap!!.width / 2f*/
-        val y = event.y /*- height / 2f + bitmap!!.height / 2f*/
-
+        val x = event.x
+        val y = event.y
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 if (!isDrawing) {
+                    paint.color = Color.BLACK
+                    paint.strokeWidth = 10f
+
+                    initX = x
+                    initY = y
                     isDrawing = true
                     isMoving = true
                     path.reset()
@@ -162,32 +179,36 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     path.moveTo(x, y)
                     pointsList.add(Pair(x, y))
                     determinationTouch = x
+
+                    moveLeft = false
+                    moveTop = false
+                    moveRight = false
+                    moveDown = false
                 }
 
                 if (topBounds.contains(x, y)) {
-                    Log.d("gjhsdfgge", "top touch")
                     topLastTouchPoint.set(x, y)
                     topRegionTouch = true
                     bottomRegionTouch = false
                 }
 
                 if (bottomBounds.contains(x, y)) {
-                    Log.d("gjhsdfgge", " bottom touch")
                     bottomLastTouchPoint.set(x, y)
                     topRegionTouch = false
                     bottomRegionTouch = true
                 }
 
                 if (isInsideTopCircle(x, y)) {
-                    paint1.color = Color.BLACK
-//                    invalidate()
+                    topLastTouchPoint.set(x, y)
+                    topRegionTouch = true
+                    bottomRegionTouch = false
                 }
 
                 if (isInsideBottomCircle(x, y)) {
-                    paint2.color = Color.BLACK
-//                    invalidate()
+                    bottomLastTouchPoint.set(x, y)
+                    topRegionTouch = false
+                    bottomRegionTouch = true
                 }
-                Log.d("dgsjskgsgsr down", "$topRegionTouch $bottomRegionTouch")
 
                 invalidate()
                 return true
@@ -198,9 +219,24 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     path.lineTo(x, y)
                     pointsList.add(Pair(x, y))
                     deltaX = x - determinationTouch
+
+                    if (x < leftStart) {
+                        moveLeft = true
+                    }
+
+                    if (y > modifiedBitmap!!.height + topStart) {
+                        moveDown = true
+                    }
+
+                    if (x > modifiedBitmap!!.width + leftStart) {
+                        moveRight = true
+                    }
+
+                    if (y < topStart) {
+                        moveTop = true
+                    }
                 }
 
-                Log.d("dgsjskgsgsr move", "$topRegionTouch $bottomRegionTouch")
                 if (topCroppedBitmap != null && topRegionTouch) {
                     val dx = x - topLastTouchPoint.x
                     val dy = y - topLastTouchPoint.y
@@ -210,15 +246,9 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     topTranslationX += dx
                     topTranslationY += dy
 
-                    /*val maxTranslationX = leftStart
-                    val maxTranslationY = height.toFloat() - topBounds.height() - topStart
-                    topTranslationX = newTranslationX.coerceIn(-leftStart, maxTranslationX)
-                    topTranslationY = newTranslationY.coerceIn(-topStart, maxTranslationY)*/
-
                     topLastTouchPoint.set(x, y)
 
                     paint1.color = Color.RED
-//                    invalidate()
                 }
 
                 if (bottomCroppedBitmap != null && bottomRegionTouch) {
@@ -230,17 +260,9 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     bottomTranslationX += dx
                     bottomTranslationY += dy
 
-                    /*val maxTranslationX = leftStart
-                    val maxTranslationY = topStart
-                    bottomTranslationX = newTranslationX.coerceIn(-leftStart, maxTranslationX)
-                    bottomTranslationY = newTranslationY.coerceIn(
-                        -topStart - bottomBounds.height(), maxTranslationY
-                    )*/
-
                     bottomLastTouchPoint.set(x, y)
 
                     paint2.color = Color.GREEN
-//                    invalidate()
                 }
 
                 invalidate()
@@ -253,11 +275,7 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     pointsList.add(Pair(x, y))
                     determinationTouch = x
 
-                    if (deltaX < 0) {
-                        cutShape(x, y, false)
-                    } else {
-                        cutShape(x, y, true)
-                    }
+                    cutShape(x, y, deltaX < 0)
                     topCroppedBitmap = cropBitmapByPath(
                         modifiedBitmap!!.copy(modifiedBitmap!!.config, true), path1, true
                     )
@@ -266,15 +284,11 @@ class CenteredBitmapImageView @JvmOverloads constructor(
                     )
                 }
 
-//                    path.reset()
                 topLastTouchPoint = PointF()
                 bottomLastTouchPoint = PointF()
                 topRegionTouch = false
                 bottomRegionTouch = false
 
-                Log.d("dgsjskgsgsr up", "$topRegionTouch $bottomRegionTouch")
-//                path1.reset()
-//                path2.reset()
                 modifiedBitmap = null
 
                 invalidate()
@@ -312,7 +326,7 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         return croppedBitmap
     }
 
-    private fun createRegionFromPath(path: Path, rectF: RectF, x: Float, y: Float): Rect {
+    private fun createRegionFromPath(path: Path, rectF: RectF): Rect {
         var rectTop = rectF.top.toInt()
         path.computeBounds(rectF, true)
 
@@ -330,7 +344,8 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         return region.bounds
     }
 
-    private fun cutShape(x: Float, y: Float, leftToRight: Boolean) {
+    private fun cutShape(x: Float, y: Float, rightToLeft: Boolean) {
+        var totalBound = RectF()
         path1.reset()
         path2.reset()
         leftPointsList.clear()
@@ -338,54 +353,425 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         middlePointsList.clear()
 
         lastRightPointY = 0.0f
+        lastRightPointY1 = 0.0f
         lastLeftPointY = 0.0f
+        lastLeftPointY1 = 0.0f
+        lastTopPointX = 0.0f
+        lastTopPointX1 = 0.0f
+        lastBottomPointX = 0.0f
+        lastBottomPointX1 = 0.0f
 
-        if (leftToRight) {
+        val path = Path()
+        path.moveTo(leftStart, topStart)
+        path.lineTo(modifiedBitmap!!.width + leftStart, topStart)
+        path.lineTo(modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart)
+        path.lineTo(leftStart, modifiedBitmap!!.height + topStart)
+        path.close()
+
+        totalBound = createRegionFromPath(path, totalBound).toRectF()
+
+        if (!rightToLeft) {
+            Log.d(TAG, "cutShape: 1 $rightToLeft")
             for (i in pointsList.indices.reversed()) {
-                if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
-                    Log.d(
-                        "esgjsdjgsgter 0 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
+                if (totalBound.contains(pointsList[i].first, pointsList[i].second)) {
+                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
+                    rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].second <= topStart) {
                     rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
                 } else if (pointsList[i].first <= leftStart) {
-                    Log.d(
-                        "esgjsdjgsgter 2 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
                     leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
-                } else {
-                    Log.d(
-                        "esgjsdjgsgter 4 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
-                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].second >= modifiedBitmap!!.height + topStart) {
+                    leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
                 }
             }
         } else {
+            Log.d(TAG, "cutShape: 2 $rightToLeft")
             for (i in pointsList.indices) {
-                if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
-                    Log.d(
-                        "esgjsdjgsgter 00 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
+                if (totalBound.contains(pointsList[i].first, pointsList[i].second)) {
+                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].first >= modifiedBitmap!!.width + leftStart) {
+                    rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].second <= topStart) {
                     rightPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
                 } else if (pointsList[i].first <= leftStart) {
-                    Log.d(
-                        "esgjsdjgsgter 22 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
                     leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
-                } else {
-                    Log.d(
-                        "esgjsdjgsgter 44 ",
-                        pointsList[i].first.toString() + " | " + pointsList[i].second
-                    )
-                    middlePointsList.add(Pair(pointsList[i].first, pointsList[i].second))
+                } else if (pointsList[i].second >= modifiedBitmap!!.height + topStart) {
+                    leftPointsList.add(Pair(pointsList[i].first, pointsList[i].second))
                 }
             }
         }
 
+        Log.d(TAG, "cutShape: left $leftPointsList")
+        Log.d(TAG, "cutShape: middle $middlePointsList")
+        Log.d(TAG, "cutShape: right $rightPointsList")
+
+        /* if (leftPointsList.isNotEmpty()) {
+             lastLeftPointY = findLastLeftPointY()
+             lastLeftPointY1 = findLastLeftPointY1()
+             lastBottomPointX = findLastBottomPointX()
+             lastBottomPointX1 = findLastBottomPointX1()
+         } else {
+             lastLeftPointY = middlePointsList[middlePointsList.size - 1].second
+             lastLeftPointY1 = middlePointsList[0].second
+             lastBottomPointX = middlePointsList[middlePointsList.size - 1].first
+             lastBottomPointX1 = middlePointsList[0].first
+         }
+
+         if (rightPointsList.isNotEmpty()) {
+             lastRightPointY = findLastRightPointY()
+             lastRightPointY1 = findLastRightPointY1()
+             lastTopPointX = findLastTopPointX()
+             lastTopPointX1 = findLastTopPointX1()
+         } else {
+             lastRightPointY = middlePointsList[0].second
+             lastRightPointY1 = middlePointsList[middlePointsList.size - 1].second
+             lastTopPointX = middlePointsList[0].first
+             lastTopPointX1 = middlePointsList[middlePointsList.size - 1].first
+         }*/
+
+        calculatePath()
+
+        isMoving = false
+    }
+
+    private fun calculatePath() {
+        abovePointList = ArrayList()
+        belowPointList = ArrayList()
+
+        if (moveLeft && !moveRight && !moveTop && !moveDown) {
+            Log.d(TAG, "calculateSlope: left to left")
+            updateLeftLeftPathPointsList()
+//            left to left
+        } else if (!moveLeft && moveRight && !moveTop && !moveDown) {
+            Log.d(TAG, "calculateSlope: right to right")
+            updateRightRightPathPointsList()
+//            right to right
+        } else if (!moveLeft && !moveRight && moveTop && !moveDown) {
+            Log.d(TAG, "calculateSlope: top to top")
+            updateTopTopPathPointsList()
+//            top to top
+        } else if (!moveLeft && !moveRight && !moveTop && moveDown) {
+            Log.d(TAG, "calculateSlope: down to down")
+            updateDownDownPathPointsList()
+//            down to down
+        } else if (moveLeft && moveRight) {
+            Log.d(TAG, "calculateSlope: left & right")
+            updateLeftRightPathPointsList()
+//            left & right
+        } else if (moveTop && moveDown) {
+            Log.d(TAG, "calculateSlope: top & down")
+            updateTopDownPathPointsList()
+//            top & down
+        } else if (moveLeft && moveTop) {
+            Log.d(TAG, "calculateSlope: left & top")
+            updateLeftTopPathPointsList()
+//            left & top
+        } else if (moveLeft && moveDown) {
+            Log.d(TAG, "calculateSlope: left & down")
+            updateLeftDownPathPointsList()
+//            left & down
+        } else if (moveRight && moveTop) {
+            Log.d(TAG, "calculateSlope: right & top")
+            updateRightTopPathPointsList()
+//            right & top
+        } else if (moveRight && moveDown) {
+            Log.d(TAG, "calculateSlope: right & down")
+            updateRightDownPathPointsList()
+//            right & down
+        } else {
+            updateOnlyMiddlePathPointsList()
+        }
+
+        for (point in abovePointList.indices) {
+            if (point == 0) {
+                path1.moveTo(abovePointList[point].first, abovePointList[point].second)
+            } else {
+                path1.lineTo(abovePointList[point].first, abovePointList[point].second)
+            }
+        }
+        path1.close()
+
+        for (point in belowPointList.indices) {
+            if (point == 0) {
+                path2.moveTo(belowPointList[point].first, belowPointList[point].second)
+            } else {
+                path2.lineTo(belowPointList[point].first, belowPointList[point].second)
+            }
+        }
+        path2.close()
+
+        topBounds = createRegionFromPath(path1, RectF()).toRectF()
+        bottomBounds = createRegionFromPath(path2, RectF()).toRectF()
+    }
+
+    private fun updateOnlyMiddlePathPointsList() {
+        abovePointList.add(Pair(leftStart, middlePointsList[middlePointsList.size - 1].second))
+        abovePointList.add(Pair(leftStart, topStart))
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, middlePointsList[0].second))
+        abovePointList.addAll(middlePointsList)
+
+        belowPointList.add(Pair(leftStart, middlePointsList[middlePointsList.size - 1].second))
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, middlePointsList[0].second))
+        belowPointList.addAll(middlePointsList)
+    }
+
+    private fun updateDownDownPathPointsList() {
+        if (leftPointsList.isNotEmpty()) {
+            lastBottomPointX = findLastBottomPointX()
+            lastBottomPointX1 = findLastBottomPointX1()
+        } else {
+            lastBottomPointX = middlePointsList[middlePointsList.size - 1].first
+            lastBottomPointX1 = middlePointsList[0].first
+        }
+
+        abovePointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(lastBottomPointX1, modifiedBitmap!!.height + topStart))
+
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(lastBottomPointX1, modifiedBitmap!!.height + topStart))
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        belowPointList.add(Pair(leftStart, topStart))
+    }
+
+    private fun updateTopTopPathPointsList() {
+        if (rightPointsList.isNotEmpty()) {
+            lastTopPointX = findLastTopPointX()
+            lastTopPointX1 = findLastTopPointX1()
+        } else {
+            lastTopPointX = middlePointsList[0].first
+            lastTopPointX1 = middlePointsList[middlePointsList.size - 1].first
+        }
+
+        abovePointList.add(Pair(lastTopPointX, topStart))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(lastTopPointX1, topStart))
+
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(lastTopPointX, topStart))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(lastTopPointX1, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+    }
+
+    private fun updateRightRightPathPointsList() {
+        if (rightPointsList.isNotEmpty()) {
+            lastRightPointY = findLastRightPointY()
+            lastRightPointY1 = findLastRightPointY1()
+        } else {
+            lastRightPointY = middlePointsList[0].second
+            lastRightPointY1 = middlePointsList[middlePointsList.size - 1].second
+        }
+
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY1))
+
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY1))
+    }
+
+    private fun updateLeftLeftPathPointsList() {
+        if (leftPointsList.isNotEmpty()) {
+            lastLeftPointY = findLastLeftPointY()
+            lastLeftPointY1 = findLastLeftPointY1()
+        } else {
+            lastLeftPointY = middlePointsList[middlePointsList.size - 1].second
+            lastLeftPointY1 = middlePointsList[0].second
+        }
+
+        abovePointList.add(Pair(leftStart, lastLeftPointY))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(leftStart, lastLeftPointY1))
+
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(leftStart, lastLeftPointY))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(leftStart, lastLeftPointY1))
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+    }
+
+    private fun updateRightDownPathPointsList() {
+        lastBottomPointX = if (leftPointsList.isNotEmpty()) {
+            findLastBottomPointX()
+        } else {
+            middlePointsList[middlePointsList.size - 1].first
+        }
+
+        lastRightPointY = if (rightPointsList.isNotEmpty()) {
+            findLastRightPointY()
+        } else {
+            middlePointsList[0].second
+        }
+
+        abovePointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        abovePointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        abovePointList.addAll(middlePointsList.reversed())
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+    }
+
+    private fun updateRightTopPathPointsList() {
+        if (rightPointsList.isNotEmpty()) {
+            lastRightPointY = findLastRightPointY()
+            lastTopPointX = findRightTopPointX()
+        } else {
+            lastRightPointY = middlePointsList[0].second
+            lastTopPointX = middlePointsList[0].first
+        }
+
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(lastTopPointX, topStart))
+
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(lastTopPointX, topStart))
+        belowPointList.addAll(middlePointsList.reversed())
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+    }
+
+    private fun updateLeftDownPathPointsList() {
+        if (leftPointsList.isNotEmpty()) {
+            lastLeftPointY = findLastLeftPointY()
+            lastBottomPointX = findLastBottomPointX()
+        } else {
+            lastLeftPointY = middlePointsList[middlePointsList.size - 1].second
+            lastBottomPointX = middlePointsList[middlePointsList.size - 1].first
+        }
+
+        abovePointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        abovePointList.add(Pair(leftStart, lastLeftPointY))
+        abovePointList.addAll(middlePointsList.reversed())
+        abovePointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        belowPointList.addAll(middlePointsList)
+        belowPointList.add(Pair(leftStart, lastLeftPointY))
+        belowPointList.add(Pair(leftStart, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+    }
+
+    private fun updateLeftTopPathPointsList() {
+        lastLeftPointY = if (leftPointsList.isNotEmpty()) {
+            findLastLeftPointY()
+        } else {
+            middlePointsList[middlePointsList.size - 1].second
+        }
+
+        lastTopPointX = if (rightPointsList.isNotEmpty()) {
+            findLeftTopPointX()
+        } else {
+            middlePointsList[0].first
+        }
+
+        abovePointList.add(Pair(leftStart, topStart))
+        abovePointList.add(Pair(lastTopPointX, topStart))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(leftStart, lastLeftPointY))
+
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(leftStart, lastLeftPointY))
+        belowPointList.addAll(middlePointsList.reversed())
+        belowPointList.add(Pair(lastTopPointX, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+    }
+
+    private fun updateTopDownPathPointsList() {
+        lastBottomPointX = if (leftPointsList.isNotEmpty()) {
+            findLastBottomPointX()
+        } else {
+            middlePointsList[middlePointsList.size - 1].first
+        }
+
+        lastTopPointX = if (rightPointsList.isNotEmpty()) {
+            findLeftTopPointX()
+        } else {
+            middlePointsList[middlePointsList.size - 1].first
+        }
+
+        abovePointList.add(Pair(leftStart, topStart))
+        abovePointList.add(Pair(lastTopPointX, topStart))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        abovePointList.add(
+            Pair(leftStart, modifiedBitmap!!.height + topStart)
+        )
+
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
+        )
+        belowPointList.add(Pair(lastBottomPointX, modifiedBitmap!!.height + topStart))
+        belowPointList.addAll(middlePointsList.reversed())
+        belowPointList.add(Pair(lastTopPointX, topStart))
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+    }
+
+    private fun updateLeftRightPathPointsList() {
         lastLeftPointY = if (leftPointsList.isNotEmpty()) {
             findLastLeftPointY()
         } else {
@@ -398,34 +784,48 @@ class CenteredBitmapImageView @JvmOverloads constructor(
             middlePointsList[0].second
         }
 
-        path1.moveTo(leftStart, topStart)
-        path1.lineTo(modifiedBitmap!!.width.toFloat() + leftStart, topStart)
-        path1.lineTo(modifiedBitmap!!.width.toFloat() + leftStart, lastRightPointY)
-
-        for (i in middlePointsList.indices) {
-            path1.lineTo(middlePointsList[i].first, middlePointsList[i].second)
-        }
-
-        path1.lineTo(leftStart, lastLeftPointY)
-        path1.close();
-
-        path2.moveTo(
-            modifiedBitmap!!.width.toFloat() + leftStart,
-            modifiedBitmap!!.height.toFloat() + topStart
+        abovePointList.add(Pair(leftStart, topStart))
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, topStart))
+        abovePointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+        abovePointList.addAll(middlePointsList)
+        abovePointList.add(Pair(leftStart, lastLeftPointY))
+        belowPointList.add(
+            Pair(
+                modifiedBitmap!!.width + leftStart, modifiedBitmap!!.height + topStart
+            )
         )
-        path2.lineTo(leftStart, modifiedBitmap!!.height.toFloat() + topStart)
-        path2.lineTo(leftStart, lastLeftPointY)
+        belowPointList.add(Pair(leftStart, modifiedBitmap!!.height + topStart))
+        belowPointList.add(Pair(leftStart, lastLeftPointY))
+        belowPointList.addAll(middlePointsList.reversed())
+        belowPointList.add(Pair(modifiedBitmap!!.width + leftStart, lastRightPointY))
+    }
 
-        for (i in middlePointsList.indices.reversed()) {
-            path2.lineTo(middlePointsList[i].first, middlePointsList[i].second)
-        }
-        path2.lineTo(modifiedBitmap!!.width.toFloat() + leftStart, lastRightPointY)
-        path2.close()
+    private fun findLastTopPointX1(): Float {
+        var diff =
+            ((rightPointsList[0].first - middlePointsList[middlePointsList.size - 1].first) / (rightPointsList[0].second - middlePointsList[middlePointsList.size - 1].second))
+        diff *= (topStart - middlePointsList[middlePointsList.size - 1].second)
+        return diff + middlePointsList[middlePointsList.size - 1].first
+    }
 
-        isMoving = false
+    private fun findLastRightPointY1(): Float {
+        var diff =
+            ((rightPointsList[0].second - middlePointsList[middlePointsList.size - 1].second) / (rightPointsList[0].first - middlePointsList[middlePointsList.size - 1].first))
+        diff *= ((modifiedBitmap!!.width + leftStart) - middlePointsList[middlePointsList.size - 1].first)
+        return diff + middlePointsList[middlePointsList.size - 1].second
+    }
 
-        topBounds = createRegionFromPath(path1, topBounds, x, y).toRectF()
-        bottomBounds = createRegionFromPath(path2, bottomBounds, x, y).toRectF()
+    private fun findLastBottomPointX1(): Float {
+        var diff =
+            ((middlePointsList[0].first - leftPointsList[leftPointsList.size - 1].first) / (middlePointsList[0].second - leftPointsList[leftPointsList.size - 1].second))
+        diff *= ((modifiedBitmap!!.height + topStart) - leftPointsList[leftPointsList.size - 1].second)
+        return diff + leftPointsList[leftPointsList.size - 1].first
+    }
+
+    private fun findLastLeftPointY1(): Float {
+        var diff =
+            ((middlePointsList[0].second - leftPointsList[leftPointsList.size - 1].second) / (middlePointsList[0].first - leftPointsList[leftPointsList.size - 1].first))
+        diff *= (leftStart - leftPointsList[leftPointsList.size - 1].first)
+        return diff + leftPointsList[leftPointsList.size - 1].second
     }
 
     private fun findLastLeftPointY(): Float {
@@ -435,10 +835,10 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         return diff + leftPointsList[0].second
     }
 
-    private fun findLastDownPointX(): Float {
+    private fun findLastBottomPointX(): Float {
         var diff =
             ((middlePointsList[middlePointsList.size - 1].first - leftPointsList[0].first) / (middlePointsList[middlePointsList.size - 1].second - leftPointsList[0].second))
-        diff *= (topStart - leftPointsList[0].first)
+        diff *= ((modifiedBitmap!!.height + topStart) - leftPointsList[0].second)
         return diff + leftPointsList[0].first
     }
 
@@ -449,23 +849,34 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         return diff + middlePointsList[0].second
     }
 
-    private fun findLastUpPointX(): Float {
+    private fun findLastTopPointX(): Float {
+        var diff =
+            ((rightPointsList[0].first - middlePointsList[middlePointsList.size - 1].first) / (rightPointsList[0].second - middlePointsList[middlePointsList.size - 1].second))
+        diff *= (topStart - middlePointsList[middlePointsList.size - 1].second)
+        return diff + middlePointsList[middlePointsList.size - 1].first
+    }
+
+    private fun findRightTopPointX(): Float {
+        var diff =
+            ((rightPointsList[0].first - middlePointsList[middlePointsList.size - 1].first) / (rightPointsList[0].second - middlePointsList[middlePointsList.size - 1].second))
+        diff *= (topStart - middlePointsList[middlePointsList.size - 1].second)
+        return diff + middlePointsList[middlePointsList.size - 1].first
+    }
+
+    private fun findLeftTopPointX(): Float {
         var diff =
             ((rightPointsList[rightPointsList.size - 1].first - middlePointsList[0].first) / (rightPointsList[rightPointsList.size - 1].second - middlePointsList[0].second))
-        diff *= ((modifiedBitmap!!.height + topStart) - middlePointsList[0].second)
+        diff *= (topStart - middlePointsList[0].second)
         return diff + middlePointsList[0].first
     }
 
     fun reset() {
-//        path.reset()
-        paint1.color = Color.RED
-        paint2.color = Color.GREEN
+        paint.color = Color.WHITE
+        paint.strokeWidth = 5f
         path1.reset()
         path2.reset()
         topBounds = RectF()
         bottomBounds = RectF()
-//        topRegion = Region()
-//        bottomRegion = Region()
         topCroppedBitmap = null
         bottomCroppedBitmap = null
         topLastTouchPoint = PointF()
@@ -475,6 +886,21 @@ class CenteredBitmapImageView @JvmOverloads constructor(
         bottomTranslationX = 0f
         bottomTranslationY = 0f
         isDrawing = false
+
+        lastRightPointY = 0.0f
+        lastRightPointY1 = 0.0f
+        lastLeftPointY = 0.0f
+        lastLeftPointY1 = 0.0f
+        lastTopPointX = 0.0f
+        lastTopPointX1 = 0.0f
+        lastBottomPointX = 0.0f
+        lastBottomPointX1 = 0.0f
+
+        moveLeft = false
+        moveRight = false
+        moveTop = false
+        moveDown = false
+
         setBitmap(bitmap!!)
         Toast.makeText(context, "Reset to Original", Toast.LENGTH_SHORT).show()
         invalidate()
