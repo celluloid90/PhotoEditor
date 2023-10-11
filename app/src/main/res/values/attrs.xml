@@ -4,4 +4,12 @@
         <attr name="square_color" format="color"/>
         <attr name="square_size" format="dimension"/>
     </declare-styleable>
+    <declare-styleable name="ABCPlayerView">
+        <attr name="showText" format="boolean" />
+        <attr name="typePlayer" format="enum">
+            <enum name="MEDIAPLAYER" value="0" />
+            <enum name="IJKPLAYER" value="1" />
+            <enum name="EXOPLAYER" value="2" />
+        </attr>
+    </declare-styleable>
 </resources>

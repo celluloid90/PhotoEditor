@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.photo_editor.databinding.ActivityHomeBinding
 import com.example.photo_editor.editor.activity.PickerActivity
+import com.example.photo_editor.editor.activity.PlayerActivity
+import com.example.photo_editor.editor.activity.playerview.MainActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -19,7 +21,8 @@ class HomeActivity : AppCompatActivity() {
            startActivity(Intent(this, PickerActivity::class.java))
         }
         binding.collage.setOnClickListener {
-            Toast.makeText(this, "Collage", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, MainActivity::class.java))
+
         }
     }
 }
