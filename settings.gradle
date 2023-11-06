@@ -28,6 +28,5 @@ dependencyResolutionManagement {
         }
     }
 }
-rootProject.name = "PHTDTR"
+rootProject.name = "Segmentation"
 include ':app'
-include ':CollageEditor'
