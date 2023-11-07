@@ -1,6 +1,7 @@
 package com.example.segmentation;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,6 +11,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean processOn = false;
     private CardView black, white;
     private int colorBlack = Color.BLACK, colorWhite = 0;
+    private String imageName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 if (segmentedPath != null) {
                     try {
                         Bitmap showedImg = MediaStore.Images.Media.getBitmap(getContentResolver(), segmentedPath);
-                        SaveBitmapWrapperKt.saveToGallery(MainActivity.this, changeBgColor(showedImg), "Pixelcut");
+                        SaveBitmapWrapperKt.saveToGallery(MainActivity.this, changeBgColor(showedImg), "Pixelcut", imageName);
                         Toast.makeText(MainActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -128,6 +131,16 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(intent, "Open folder"), 100);
     }
 
+    private String queryName(Uri uri) {
+        Cursor returnCursor = getContentResolver().query(uri, null, null, null, null);
+        assert returnCursor != null;
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String name = returnCursor.getString(nameIndex);
+        returnCursor.close();
+        return name;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -135,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             if (data != null) {
                 segmentedImageView.setVisibility(View.VISIBLE);
                 imagePath = data.getData();
+                imageName = queryName(imagePath).split("\\.")[0];
 
                 try {
                     segmentedImageView.setImageURI(imagePath);

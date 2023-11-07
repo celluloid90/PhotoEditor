@@ -16,8 +16,13 @@ import java.io.OutputStream
  * @date: On 10/12/23 at 11:57 AM
  */
 
-fun saveToGallery(context: Context, bitmap: Bitmap, albumName: String) {
-    val filename = "${System.currentTimeMillis()}.png"
+fun saveToGallery(
+    context: Context,
+    bitmap: Bitmap,
+    albumName: String,
+    imageName: String
+) {
+    val filename = "${imageName}_demo.png"
     val write: (OutputStream) -> Boolean = {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
     }
