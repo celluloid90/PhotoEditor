@@ -24,6 +24,7 @@ import androidx.cardview.widget.CardView;
 
 import com.example.photo_editor.R;
 import com.example.segmentation.segmentation.SaveBitmapWrapperKt;
+import com.example.segmentation.segmentation.ScaleBitmapWrapperKt;
 import com.example.segmentation.segmentation.SegmentationWithApi;
 import com.example.segmentation.segmentation.Utils;
 import com.example.segmentation.segmentation.models.SegmentedImageDownloadListener;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private CardView black, white;
     private int colorBlack = Color.BLACK, colorWhite = 0;
     private String imageName;
+    private final int maxImageSize = 640;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imagePath);
                     bitmap = Utils.rotateBitmap(MainActivity.this, imagePath.getPath(), bitmap);
 
-                    prepareSegmentation(bitmap);
+                    prepareSegmentation(ScaleBitmapWrapperKt.scaleIfNeeded(bitmap, maxImageSize));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
