@@ -3,12 +3,11 @@ package com.example.segmentation.segmentation
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
 
 /**
  * @author: Raihan Uddin Piash (raihan.uddin@braincraftapps.com)
@@ -17,36 +16,44 @@ import java.io.OutputStream
  */
 
 fun saveToGallery(
-    context: Context,
-    bitmap: Bitmap,
-    albumName: String,
-    imageName: String
+    context: Context, bitmap: Bitmap, albumName: String, imageName: String
 ) {
     val filename = "${imageName}_demo.png"
-    val write: (OutputStream) -> Boolean = {
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+
+    val externalImageContentUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    } else {
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
     }
 
+    val contentValues = ContentValues()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/$albumName")
+        contentValues.put(
+            MediaStore.Images.Media.RELATIVE_PATH,
+            Environment.DIRECTORY_PICTURES + File.separator + albumName
+        )
+    } else {
+        val directory =
+            File(Environment.getExternalStorageDirectory().absolutePath + File.separator + Environment.DIRECTORY_PICTURES/* + File.separator + albumName*/)
+
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val outputFile = File(directory, filename)
+        if (outputFile.exists()) {
+            outputFile.deleteRecursively()
         }
 
-        context.contentResolver.let {
-            it.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)?.let { uri ->
-                it.openOutputStream(uri)?.let(write)
-            }
+        outputFile.createNewFile()
+        contentValues.put(MediaStore.Images.Media.DATA, outputFile.absolutePath)
+    }
+
+    val uri = context.contentResolver.insert(externalImageContentUri, contentValues) ?: return
+
+    context.contentResolver.openOutputStream(uri).use { stream ->
+        runCatching {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream!!)
         }
-    } else {
-        val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            .toString() + File.separator + albumName
-        val file = File(imagesDir)
-        if (!file.exists()) {
-            file.mkdir()
-        }
-        val image = File(imagesDir, filename)
-        write(FileOutputStream(image))
+        stream?.flush()
     }
 }

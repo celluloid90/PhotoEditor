@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.example.photo_editor'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.photo_editor_dev"
         minSdk 24
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -26,6 +26,18 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            Properties properties = new Properties()
+            properties.load(project.rootProject.file('appdata.properties').newDataInputStream())
+
+            buildConfigField("Integer", "MODEL_VERSION_CLASSIFICATION", properties.getProperty("MODEL_VERSION_CLASSIFICATION"))
+            buildConfigField("Integer", "MODEL_VERSION_BUNDLED", properties.getProperty("MODEL_VERSION_BUNDLED"))
+            buildConfigField("Integer", "MODEL_VERSION_HUMAN_LARGE", properties.getProperty("MODEL_VERSION_HUMAN_LARGE"))
+            buildConfigField("Integer", "MODEL_VERSION_FOREGROUND_LARGE", properties.getProperty("MODEL_VERSION_FOREGROUND_LARGE"))
+            buildConfigField("String", "MODEL_DOWNLOAD_URL_HUMAN_LARGE", properties.getProperty("MODEL_DOWNLOAD_URL_HUMAN_LARGE"))
+            buildConfigField("String", "MODEL_DOWNLOAD_URL_FOREGROUND_LARGE", properties.getProperty("MODEL_DOWNLOAD_URL_FOREGROUND_LARGE"))
         }
     }
     compileOptions {
@@ -46,6 +58,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.work:work-runtime-ktx:2.9.0'
+    implementation project(':nativemagicbrush')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -53,4 +67,8 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
     implementation "com.squareup.retrofit2:converter-gson:2.5.0"
     implementation "com.google.code.gson:gson:2.9.1"
+
+    implementation "org.pytorch:pytorch_android_lite:1.13.1"
+    implementation "org.pytorch:pytorch_android_torchvision_lite:1.13.1"
+    implementation "com.squareup.okhttp3:okhttp:4.2.2"
 }

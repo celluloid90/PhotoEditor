@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2022 - 2023 Brain Craft Ltd - All Rights Reserved
+  ~
+  ~ This file is a part of BgRemover.
+  ~
+  ~ Unauthorized copying of this file, via any medium is strictly prohibited.
+  ~ Proprietary and confidential.
+  ~
+  ~ @file: AndroidManifest.xml
+  ~ @author: shakib@braincraftapps.com
+  ~ @modified: May 07, 2023, 03:51 PM
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+</manifest>

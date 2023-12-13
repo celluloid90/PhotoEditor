@@ -1,6 +1,7 @@
 package com.example.segmentation;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -12,12 +13,17 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -34,8 +40,10 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Uri imagePath, segmentedPath;
-    private ImageView segmentedImageView, segmentedBg;
+    private static final int REQUEST_WRITE_PERMISSION = 999;
+    private Uri imagePath;
+    private ImageView segmentedBg;
+    private TouchImageView segmentedImageView;
     private Button saveBtn, gallery;
     private CircularProgressIndicator progressBar;
     private TextView progressText;
@@ -43,14 +51,19 @@ public class MainActivity extends AppCompatActivity {
     private CardView black, white;
     private int colorBlack = Color.BLACK, colorWhite = 0;
     private String imageName;
-    private final int maxImageSize = 640;
+    private Button preview;
+    private Bitmap originalBitmap, segmentedBitmap;
+    private boolean isLongPressed = false;
+    private RadioGroup radioGroup;
+    private int selectedButtonId = 1;
+    private Bitmap showedImg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        segmentedImageView = findViewById(R.id.segmented_image_view);
+        segmentedImageView = (TouchImageView) findViewById(R.id.segmented_image_view);
         saveBtn = findViewById(R.id.saveBnt);
         gallery = findViewById(R.id.openGallery);
         progressBar = findViewById(R.id.progressBar);
@@ -58,6 +71,26 @@ public class MainActivity extends AppCompatActivity {
         segmentedBg = findViewById(R.id.segment_bg);
         black = findViewById(R.id.color_black_container);
         white = findViewById(R.id.color_white_container);
+        preview = findViewById(R.id.preview);
+        radioGroup = findViewById(R.id.radioGroup);
+        RadioButton defaultRadioButton = findViewById(R.id.radioOption1);
+        defaultRadioButton.setChecked(true);
+
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.radioOption1) {
+                    selectedButtonId = 1;
+                    Log.d("shdgsgedge 1", " " + checkedId);
+                } else if (checkedId == R.id.radioOption2) {
+                    selectedButtonId = 2;
+                    Log.d("shdgsgedge 2", " " + checkedId);
+                } else {
+                    selectedButtonId = 3;
+                    Log.d("shdgsgedge 3", " " + checkedId);
+                }
+            }
+        });
 
         gallery.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,17 +99,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        segmentedImageView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return true;
+            }
+        });
+
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (segmentedPath != null) {
-                    try {
-                        Bitmap showedImg = MediaStore.Images.Media.getBitmap(getContentResolver(), segmentedPath);
-                        SaveBitmapWrapperKt.saveToGallery(MainActivity.this, changeBgColor(showedImg), "Pixelcut", imageName);
-                        Toast.makeText(MainActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                if (hasStoragePermission(REQUEST_WRITE_PERMISSION)) {
+                    saveToStorage();
                 }
             }
         });
@@ -104,6 +138,57 @@ public class MainActivity extends AppCompatActivity {
                 colorBlack = 0;
             }
         });
+
+        preview.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                isLongPressed = true;
+                segmentedImageView.setImageBitmap(originalBitmap);
+                return true;
+            }
+        });
+
+        preview.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                preview.onTouchEvent(event);
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (isLongPressed) {
+                        isLongPressed = false;
+                        segmentedImageView.setImageBitmap(segmentedBitmap);
+                    }
+                }
+                return false;
+            }
+        });
+    }
+
+    private void saveToStorage() {
+        if (showedImg != null) {
+            SaveBitmapWrapperKt.saveToGallery(MainActivity.this, changeBgColor(showedImg), "Pixelcut", imageName);
+            Toast.makeText(MainActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MainActivity.this, "No image Saved!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean hasStoragePermission(int requestCode) {
+        if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, requestCode);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (requestCode == REQUEST_WRITE_PERMISSION) {
+                saveToStorage();
+            }
+        }
     }
 
     private Bitmap changeBgColor(Bitmap showedImg) {
@@ -122,11 +207,12 @@ public class MainActivity extends AppCompatActivity {
     private void openGalleryFolder() {
         if (processOn) return;
 
-        segmentedPath = null;
+        showedImg = null;
         processOn = true;
         segmentedImageView.setVisibility(View.INVISIBLE);
         segmentedBg.setVisibility(View.INVISIBLE);
-        findViewById(R.id.processed).setVisibility(View.GONE);
+        preview.setVisibility(View.INVISIBLE);
+        findViewById(R.id.processed).setVisibility(View.INVISIBLE);
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getPath());
         intent.setDataAndType(uri, "image/*");
@@ -148,17 +234,19 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == 100) {
             if (data != null) {
+                segmentedImageView.resetView(MainActivity.this);
+                segmentedImageView.requestLayout();
                 segmentedImageView.setVisibility(View.VISIBLE);
                 imagePath = data.getData();
                 imageName = queryName(imagePath).split("\\.")[0];
 
                 try {
-                    segmentedImageView.setImageURI(imagePath);
-
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imagePath);
-                    bitmap = Utils.rotateBitmap(MainActivity.this, imagePath.getPath(), bitmap);
-
-                    prepareSegmentation(ScaleBitmapWrapperKt.scaleIfNeeded(bitmap, maxImageSize));
+                    bitmap = Utils.rotateBitmap(MainActivity.this, imagePath.toString(), bitmap);
+                    bitmap = ScaleBitmapWrapperKt.scaleIfNeeded(bitmap, 1920);
+                    segmentedImageView.setImageBitmap(bitmap);
+                    originalBitmap = bitmap;
+                    prepareSegmentation(bitmap);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -180,20 +268,33 @@ public class MainActivity extends AppCompatActivity {
 
                 new SegmentationWithApi().initSegmentationWithApi(MainActivity.this, bitmap, new SegmentedImageDownloadListener() {
                     @Override
-                    public void onCompleted(Uri parse) {
-                        segmentedPath = parse;
+                    public void onCompleted(Uri parse, Bitmap b) {
+                        Bitmap bitmap = null;
                         try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), parse);
-                            bitmap = Utils.rotateBitmap(MainActivity.this, imagePath.getPath(), bitmap);
-                            segmentedImageView.setImageBitmap(bitmap);
+                            if (b != null) {
+                                bitmap = b;
+                            } else {
+                                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), parse);
+                            }
+
+                            showedImg = bitmap;
+                            if (bitmap == null) {
+                                onError("error");
+                                return;
+                            } else {
+                                segmentedImageView.setImageBitmap(bitmap);
+                                segmentedBitmap = bitmap;
+                            }
                         } catch (IOException e) {
+                            e.printStackTrace();
                             throw new RuntimeException(e);
                         }
 
-                        segmentedBg.setVisibility(View.VISIBLE);
+//                        segmentedBg.setVisibility(View.VISIBLE);
                         segmentedBg.setBackground(getDrawable(R.drawable.bg_save_block));
                         progressBar.setVisibility(View.INVISIBLE);
                         progressText.setVisibility(View.INVISIBLE);
+                        preview.setVisibility(View.VISIBLE);
                         findViewById(R.id.processed).setVisibility(View.VISIBLE);
                         processOn = false;
                     }
@@ -201,8 +302,11 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(String errorMessage) {
                         Toast.makeText(MainActivity.this, "Segmentation Failed.", Toast.LENGTH_SHORT).show();
+                        progressBar.setVisibility(View.INVISIBLE);
+                        progressText.setVisibility(View.INVISIBLE);
+                        processOn = false;
                     }
-                });
+                }, selectedButtonId);
             }
         }, 50);
     }

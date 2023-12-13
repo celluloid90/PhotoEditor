@@ -1,5 +1,6 @@
 package com.example.segmentation.segmentation.models;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
 /**
@@ -8,7 +9,7 @@ import android.net.Uri;
  * @date: On 7/19/23 at 12:22 PM
  */
 public interface SegmentedImageDownloadListener {
-    void onCompleted(Uri parse);
+    void onCompleted(Uri parse, Bitmap bitmap);
 
     void onError(String errorMessage);
 }

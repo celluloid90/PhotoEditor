@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Segmentation"
 include ':app'
+include ':nativemagicbrush'

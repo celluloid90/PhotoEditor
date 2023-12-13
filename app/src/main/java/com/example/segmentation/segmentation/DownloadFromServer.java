@@ -24,6 +24,7 @@ public class DownloadFromServer {
     private ArrayList<String> mEmojiCategoryNameList;
     public static final String CONTENTS_PATH = "contents_path";
     public static final String CONTENTS_NAME = "contents_name";
+
     public DownloadFromServer(Context context, ArrayList<String> emojiCategoryNameList) {
         mContext = context;
         this.mEmojiCategoryNameList = emojiCategoryNameList;
@@ -88,7 +89,7 @@ public class DownloadFromServer {
                 URL url = new URL(args[0]);
                 destinationFilePath = args[1];
 
-                tempFile = new File(destinationFilePath + "downloading");
+                tempFile = new File(destinationFilePath);
 
                 connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
@@ -132,7 +133,7 @@ public class DownloadFromServer {
                 ArrayList<String> filePath = Utils.getFolderContents(SEGMENTED_FOLDER, context, CONTENTS_PATH);
                 if (filePath.size() > 0) {
                     String path = "file://" + filePath.get(0);
-                    segmentedImageDownloadListener.onCompleted(Uri.parse(path));
+                    segmentedImageDownloadListener.onCompleted(Uri.parse(path), null);
                 } else {
                     segmentedImageDownloadListener.onError("Download Error!");
                 }

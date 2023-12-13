@@ -1,6 +1,7 @@
 package com.example.segmentation.segmentation;
 
 import com.example.photo_editor.BuildConfig;
+import com.example.segmentation.segmentation.models.InternalSegmentedDemoData;
 import com.example.segmentation.segmentation.models.SegmentationFileUploadedData;
 import com.example.segmentation.segmentation.models.SegmentedImageResponseData;
 import com.example.segmentation.segmentation.models.SegmentedUidData;
@@ -34,4 +35,10 @@ public interface SegmentationApi {
     @Headers({BuildConfig.SEGMENTATION_ACCESS_KEY,})
     @GET("info?")
     Call<SegmentedImageResponseData> getSegmentationResult(@Query("uid") String uid);
+
+
+//    Internal Demo calling.
+    @Multipart
+    @POST("api/segmentation/")
+    Call<InternalSegmentedDemoData> segmentedDemoData(@Part MultipartBody.Part part);
 }

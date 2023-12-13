@@ -3,8 +3,12 @@ package com.example.segmentation.segmentation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 
+import com.example.segmentation.ai.MagicAiBackgroundCaller;
+import com.example.segmentation.ai.MagicAiProgressListener;
+import com.example.segmentation.segmentation.models.InternalSegmentedDemoData;
 import com.example.segmentation.segmentation.models.SegmentationFileUploadedData;
 import com.example.segmentation.segmentation.models.SegmentedImageDownloadListener;
 import com.example.segmentation.segmentation.models.SegmentedImageResponseData;
@@ -45,8 +49,60 @@ public class ApiSegmentationManager {
         segmentedImageCaller = SegmentationApiClient.getRetrofitInstanceForSegmentImage().create(SegmentationApi.class);
     }
 
-    public void startImageSegmentation(Bitmap bitmap) {
-        proceedToApiSegmentation(bitmap);
+    public void startImageSegmentation(Bitmap bitmap, int selectedBtnId) {
+        if (selectedBtnId == 1) {
+            proceedToApiSegmentation(bitmap);
+        } else if (selectedBtnId == 2) {
+            startInternalImageSegmentation(bitmap);
+        } else {
+            startLocalSegmentation(bitmap);
+        }
+    }
+
+    private void startLocalSegmentation(Bitmap bit) {
+        MagicAiBackgroundCaller caller = new MagicAiBackgroundCaller(context, new MagicAiProgressListener() {
+            @Override
+            public void onMagicDone(Bitmap bitmap) {
+                if (bitmap != null) {
+                    bitmap.setHasAlpha(true);
+                    segmentedImageDownloadListener.onCompleted(null, bitmap);
+                } else {
+                    segmentedImageDownloadListener.onError("Failed");
+                }
+            }
+        });
+
+        if (bit != null) caller.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, bit);
+    }
+
+    private void startInternalImageSegmentation(Bitmap bitmap) {
+        internalImageSegment(bitmap);
+    }
+
+    private void internalImageSegment(Bitmap bitmap) {
+        File file = Utils.saveBeforeSegmentationBitmapToStorage(bitmap, context);
+        RequestBody requestBody = RequestBody.create(MediaType.parse(MEDIA_TYPE), file);
+        MultipartBody.Part part = MultipartBody.Part.createFormData(MULTIPART_IMAGE_KEY, file.getName(), requestBody);
+
+        SegmentationApi segmentationApi = SegmentationApiClient.getRetrofitInstanceForDemo().create(SegmentationApi.class);
+        Call<InternalSegmentedDemoData> call = segmentationApi.segmentedDemoData(part);
+        call.enqueue(new Callback<InternalSegmentedDemoData>() {
+            @Override
+            public void onResponse(@NotNull Call<InternalSegmentedDemoData> call, @NotNull Response<InternalSegmentedDemoData> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    segmentDemoData(response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<InternalSegmentedDemoData> call, @NotNull Throwable t) {
+                segmentedImageDownloadListener.onError(t.getMessage());
+            }
+        });
+    }
+
+    private void segmentDemoData(InternalSegmentedDemoData body) {
+        downloadSegmentedImage(body.getMaskUrl());
     }
 
     private void proceedToApiSegmentation(Bitmap bitmap) {
@@ -134,8 +190,8 @@ public class ApiSegmentationManager {
         DownloadFromServer downloadFromServer = new DownloadFromServer(context);
         downloadFromServer.downloadSegmentedImage(imagePath, new SegmentedImageDownloadListener() {
             @Override
-            public void onCompleted(Uri imagePath) {
-                segmentedImageDownloadListener.onCompleted(imagePath);
+            public void onCompleted(Uri imagePath, Bitmap bitmap) {
+                segmentedImageDownloadListener.onCompleted(imagePath, null);
             }
 
             @Override
