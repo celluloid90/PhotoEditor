@@ -8,6 +8,8 @@ import android.os.Handler;
 
 import com.example.segmentation.ai.MagicAiBackgroundCaller;
 import com.example.segmentation.ai.MagicAiProgressListener;
+import com.example.segmentation.segmentation.models.Base64_RequestModel;
+import com.example.segmentation.segmentation.models.Base64_ResponseModel;
 import com.example.segmentation.segmentation.models.InternalSegmentedDemoData;
 import com.example.segmentation.segmentation.models.SegmentationFileUploadedData;
 import com.example.segmentation.segmentation.models.SegmentedImageDownloadListener;
@@ -17,6 +19,7 @@ import com.example.segmentation.segmentation.models.SegmentedUidData;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.UUID;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -51,12 +54,44 @@ public class ApiSegmentationManager {
 
     public void startImageSegmentation(Bitmap bitmap, int selectedBtnId) {
         if (selectedBtnId == 1) {
-            proceedToApiSegmentation(bitmap);
+//            proceedToApiSegmentation(bitmap);
+            processWithBase64(bitmap);
         } else if (selectedBtnId == 2) {
             startInternalImageSegmentation(bitmap);
         } else {
             startLocalSegmentation(bitmap);
         }
+    }
+
+    private void processWithBase64(Bitmap bitmap) {
+        Base64_RequestModel base64RequestModel = new Base64_RequestModel();
+
+        String encoded = Utils.bitmapToBase64(bitmap);
+        String imageName = UUID.randomUUID().toString();
+
+        base64RequestModel.setImageName(imageName);
+        base64RequestModel.setImageValue(encoded);
+
+        SegmentationApi segmentationApi = SegmentationApiClient.getRetrofitInstanceBase64().create(SegmentationApi.class);
+        Call<Base64_ResponseModel> call = segmentationApi.segmentedDemoData(base64RequestModel);
+        call.enqueue(new Callback<Base64_ResponseModel>() {
+            @Override
+            public void onResponse(@NotNull Call<Base64_ResponseModel> call, @NotNull Response<Base64_ResponseModel> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    base64Response(response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<Base64_ResponseModel> call, @NotNull Throwable t) {
+                segmentedImageDownloadListener.onError(t.getMessage());
+            }
+        });
+    }
+
+    private void base64Response(Base64_ResponseModel body) {
+        Bitmap bitmap = Utils.base64ToBitmap(body.getImageValue());
+        segmentedImageDownloadListener.onCompleted(null, bitmap);
     }
 
     private void startLocalSegmentation(Bitmap bit) {
