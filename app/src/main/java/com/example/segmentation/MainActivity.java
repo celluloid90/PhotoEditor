@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imagePath);
                     bitmap = Utils.rotateBitmap(MainActivity.this, imagePath.toString(), bitmap);
-                    bitmap = ScaleBitmapWrapperKt.scaleIfNeeded(bitmap, 1920);
+                    bitmap = ScaleBitmapWrapperKt.scaleIfNeeded(bitmap, 1080);
                     segmentedImageView.setImageBitmap(bitmap);
                     originalBitmap = bitmap;
                     prepareSegmentation(bitmap);
