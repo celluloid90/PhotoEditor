@@ -13,7 +13,7 @@ public class SegmentationApiClient {
     public static final String SEGMENTATION_BASE_URL = BuildConfig.SEGMENTATION_BASE_URL;
     public static final String SEGMENTATION_IMAGE_UPLOAD_BASE_URL = BuildConfig.SEGMENTATION_IMAGE_UPLOAD_BASE_URL;
     public static final String SEGMENTATION_BASE_64 = "https://57bk3pfl59zvti-8080.proxy.runpod.net/";
-    public static final String SEGMENTATION_DEMO_URL = "http://103.4.146.174:8222/";
+    public static final String SEGMENTATION_DEMO_URL = "http://103.95.97.13:8222/";
 
     public static Retrofit getRetrofitInstanceForFileUpload() {
         if (retrofitFileUpload == null) {
